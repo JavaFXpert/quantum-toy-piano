@@ -7,6 +7,14 @@ from math import *
 import copy
 from s04_rotcircuit import *
 
+#FOR COMPILERCONNECTION
+from pyquil.api import CompilerConnection, get_devices
+devices = get_devices(as_dict=True)
+print(devices)
+quantum_device = devices['8Q-Agave']
+compiler = CompilerConnection(quantum_device)
+
+
 app = Flask(__name__)
 
 DEGREES_OF_FREEDOM = 6
@@ -14,6 +22,8 @@ NUM_PITCHES = 4
 DIATONIC_SCALE_OCTAVE_PITCHES = 8
 NUM_CIRCUIT_WIRES = 3
 TOTAL_MELODY_NOTES = 7
+# RY_RAD_ADJ = -np.pi/4  # adjustment in radians to each RY rotation in the circuit to compensate for QPU inaccuracies
+RY_RAD_ADJ = 0
 
 ###
 # Produces a musical (specifically second-species counterpoint) composition for
@@ -58,7 +68,7 @@ def toy_piano_counterpoint():
     harmonic_degrees = request.args['harmonic_degrees'].split(",")
     #print("harmonic_degrees: ", harmonic_degrees)
 
-    use_simulator = bool(request.args['use_simulator'])
+    use_simulator = request.args['use_simulator'].lower() == "true"
     print("use_simulator: ", use_simulator)
 
     if (len(melodic_degrees) == DEGREES_OF_FREEDOM and
@@ -67,18 +77,30 @@ def toy_piano_counterpoint():
             0 <= pitch_index < NUM_PITCHES):
 
         #TODO: Move/change this
-        rot_melodic_circuit = compute_circuit(melodic_degrees)
+        rot_melodic_circuit = compute_circuit(melodic_degrees, 0) if use_simulator else compute_circuit(melodic_degrees, RY_RAD_ADJ)
+
+        if not use_simulator:
+            rot_melodic_circuit = compiler.compile(rot_melodic_circuit)
+
         print("rot_melodic_circuit:")
         print(rot_melodic_circuit)
 
-        rot_harmonic_circuit = compute_circuit(harmonic_degrees)
+        rot_harmonic_circuit = compute_circuit(harmonic_degrees, 0) if use_simulator else compute_circuit(harmonic_degrees, RY_RAD_ADJ)
+
+        if not use_simulator:
+            rot_harmonic_circuit = compiler.compile(rot_harmonic_circuit)
+
         print("rot_harmonic_circuit:")
         print(rot_harmonic_circuit)
 
         harmony_notes_factor = 2**(species - 1)  # Number of harmony notes for each melody note
         num_composition_bits = TOTAL_MELODY_NOTES * (harmony_notes_factor + 1) * NUM_CIRCUIT_WIRES
 
-        qvm = api.QVMConnection()
+        if use_simulator:
+            q_con = api.QVMConnection()
+        else:
+            q_con = api.QVMConnection()
+            # q_con = api.QPUConnection(quantum_device)
 
         composition_bits = [0] * num_composition_bits
 
@@ -110,7 +132,7 @@ def toy_piano_counterpoint():
                 #print("rot_melodic_circuit:")
                 #print(p)
 
-                result = qvm.run(p, [2, 1, 0], num_runs)
+                result = q_con.run(p, [2, 1, 0], num_runs)
                 bits = result[0]
                 for bit_idx in range(0, NUM_CIRCUIT_WIRES):
                     composition_bits[(melody_note_idx + 1) * NUM_CIRCUIT_WIRES + bit_idx] = bits[bit_idx]
@@ -138,7 +160,7 @@ def toy_piano_counterpoint():
             #print("rot_harmonic_circuit:")
             #print(p)
 
-            result = qvm.run(p, [2, 1, 0], num_runs)
+            result = q_con.run(p, [2, 1, 0], num_runs)
             bits = result[0]
             for bit_idx in range(0, NUM_CIRCUIT_WIRES):
                 composition_bits[(melody_note_idx * NUM_CIRCUIT_WIRES * harmony_notes_factor) +
@@ -171,7 +193,7 @@ def toy_piano_counterpoint():
                 #print("rot_melodic_circuit:")
                 #print(p)
 
-                result = qvm.run(p, [2, 1, 0], num_runs)
+                result = q_con.run(p, [2, 1, 0], num_runs)
                 bits = result[0]
                 for bit_idx in range(0, NUM_CIRCUIT_WIRES):
                     composition_bits[(melody_note_idx * NUM_CIRCUIT_WIRES * harmony_notes_factor) +
@@ -189,9 +211,14 @@ def toy_piano_counterpoint():
         melody_note_nums = all_note_nums[0:TOTAL_MELODY_NOTES]
         harmony_note_nums = all_note_nums[7:num_composition_bits]
 
+    if use_simulator:
+        composer = "Rigetti QVM"
+    else:
+        composer = "Rigetti " + "8Q-Agave"
+
     ret_dict = {"melody": melody_note_nums,
                 "harmony": harmony_note_nums,
-                "lilypond": create_lilypond(melody_note_nums, harmony_note_nums),
+                "lilypond": create_lilypond(melody_note_nums, harmony_note_nums, composer),
                 "toy_piano" : create_toy_piano(melody_note_nums, harmony_note_nums)}
 
     return jsonify(ret_dict)
@@ -236,9 +263,9 @@ def pitch_letter_by_index(pitch_idx):
 
 
 # Produce output for Lilypond
-def create_lilypond(melody_note_nums, harmony_note_nums):
+def create_lilypond(melody_note_nums, harmony_note_nums, composer):
     harmony_notes_fact = int(len(harmony_note_nums) / len(melody_note_nums))
-    retval = "\\version \"2.18.2\" \\paper {#(set-paper-size \"a5\")} \\header {title=\"Schrodinger's Cat\" subtitle=\"on a Toy Piano\" composer = \"Rigetti QVM\"}  melody = \\absolute { \\clef \"bass\" \\numericTimeSignature \\time 4/4 \\tempo 4 = 100"
+    retval = "\\version \"2.18.2\" \\paper {#(set-paper-size \"a5\")} \\header {title=\"Schrodinger's Cat\" subtitle=\"on a Toy Piano\" composer = \"" + composer + "\"}  melody = \\absolute { \\clef \"bass\" \\numericTimeSignature \\time 4/4 \\tempo 4 = 100"
     for pitch in melody_note_nums:
         retval += " " + pitch_letter_by_index(pitch) + "2"
 
