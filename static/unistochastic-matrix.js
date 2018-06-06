@@ -18,20 +18,6 @@ var rv = {
     { label: "EF", value: 0 }
   ],
 
-
-/*
-var rv = {
-// The rotation angles to observe
-  rotationangles: [
-    { label: "CD", value: 0 },
-    { label: "CE", value: 0 },
-    { label: "CF", value: 0 },
-    { label: "DE", value: 0 },
-    { label: "DF", value: 0 },
-    { label: "EF", value: 0 }
-  ],
-  */
-
   // Specified resolution of rotation angle degrees at a time to move when optimizing unistochastic matrix
   degreedecimals: 0,
 

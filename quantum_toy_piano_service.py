@@ -11,7 +11,7 @@ app = Flask(__name__)
 
 DEGREES_OF_FREEDOM = 6
 NUM_PITCHES = 4
-NUM_CIRCUIT_WIRES = 2
+NUM_CIRCUIT_WIRES = 3
 TOTAL_MELODY_NOTES = 7
 
 ###
@@ -103,14 +103,14 @@ def toy_piano_counterpoint():
                 print("rot_melodic_circuit:")
                 #print(p)
 
-                result = qvm.run(p, [1, 0], num_runs)
+                result = qvm.run(p, [2, 1, 0], num_runs)
                 bits = result[0]
                 for bit_idx in range(0, NUM_CIRCUIT_WIRES):
                     composition_bits[(melody_note_idx + 1) * NUM_CIRCUIT_WIRES + bit_idx] = bits[bit_idx]
 
                 #print(composition_bits)
 
-                measured_pitch = bits[0] * 2 + bits[1]
+                measured_pitch = bits[0] * 4 + bits[1] * 2 + bits[2]
                 #print("melody melody_note_idx measured_pitch")
                 #print(melody_note_idx)
                 #print(measured_pitch)
@@ -131,7 +131,7 @@ def toy_piano_counterpoint():
             print("rot_harmonic_circuit:")
             #print(p)
 
-            result = qvm.run(p, [1, 0], num_runs)
+            result = qvm.run(p, [2, 1, 0], num_runs)
             bits = result[0]
             for bit_idx in range(0, NUM_CIRCUIT_WIRES):
                 composition_bits[(melody_note_idx * NUM_CIRCUIT_WIRES * harmony_notes_factor) +
@@ -139,7 +139,7 @@ def toy_piano_counterpoint():
 
             #print(composition_bits)
 
-            measured_pitch = bits[0] * 2 + bits[1]
+            measured_pitch = bits[0] * 4 + bits[1] * 2 + bits[2]
             #print("harmony melody_note_idx measured_pitch")
             #print(melody_note_idx)
             #print(measured_pitch)
@@ -164,7 +164,7 @@ def toy_piano_counterpoint():
                 print("rot_melodic_circuit:")
                 #print(p)
 
-                result = qvm.run(p, [1, 0], num_runs)
+                result = qvm.run(p, [2, 1, 0], num_runs)
                 bits = result[0]
                 for bit_idx in range(0, NUM_CIRCUIT_WIRES):
                     composition_bits[(melody_note_idx * NUM_CIRCUIT_WIRES * harmony_notes_factor) +
@@ -173,7 +173,7 @@ def toy_piano_counterpoint():
 
                 #print(composition_bits)
 
-                measured_pitch = bits[0] * 2 + bits[1]
+                measured_pitch = bits[0] * 4 + bits[1] * 2 + bits[2]
                 #print("melody after harmony melody_note_idx measured_pitch")
                 #print(melody_note_idx)
                 #print(measured_pitch)
@@ -188,7 +188,6 @@ def toy_piano_counterpoint():
                 "toy_piano" : create_toy_piano(melody_note_nums, harmony_note_nums)}
 
     return jsonify(ret_dict)
-
 
 
 def create_note_nums_array(ordered_classical_registers):
@@ -232,7 +231,7 @@ def pitch_letter_by_index(pitch_idx):
 # Produce output for Lilypond
 def create_lilypond(melody_note_nums, harmony_note_nums):
     harmony_notes_fact = int(len(harmony_note_nums) / len(melody_note_nums))
-    retval = "\\version \"2.18.2\" \\paper {#(set-paper-size \"a5\")} \\header {title=\"Schrodinger's Cat\" subtitle=\"on a Keyboard\" composer = \"Rigetti QVM\"}  melody = \\absolute { \\clef \"bass\" \\numericTimeSignature \\time 4/4 \\tempo 4 = 100"
+    retval = "\\version \"2.18.2\" \\paper {#(set-paper-size \"a5\")} \\header {title=\"Schrodinger's Cat\" subtitle=\"on a Toy Piano\" composer = \"Rigetti QVM\"}  melody = \\absolute { \\clef \"bass\" \\numericTimeSignature \\time 4/4 \\tempo 4 = 100"
     for pitch in melody_note_nums:
         retval += " " + pitch_letter_by_index(pitch) + "2"
 
