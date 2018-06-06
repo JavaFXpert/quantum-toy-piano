@@ -11,6 +11,7 @@ app = Flask(__name__)
 
 DEGREES_OF_FREEDOM = 6
 NUM_PITCHES = 4
+DIATONIC_SCALE_OCTAVE_PITCHES = 8
 NUM_CIRCUIT_WIRES = 3
 TOTAL_MELODY_NOTES = 7
 
@@ -45,7 +46,7 @@ TOTAL_MELODY_NOTES = 7
 def toy_piano_counterpoint():
     pitch_index = int(request.args['pitch_index'])
     if (pitch_index >= NUM_PITCHES):
-        pitch_index %= (NUM_PITCHES - 1)
+        pitch_index %= (DIATONIC_SCALE_OCTAVE_PITCHES - 1)
     #print("pitch_index: ", pitch_index)
 
     species = int(request.args['species'])
@@ -66,7 +67,10 @@ def toy_piano_counterpoint():
         rot_melodic_circuit = compute_circuit(melodic_degrees)
         print("rot_melodic_circuit:")
         print(rot_melodic_circuit)
+
         rot_harmonic_circuit = compute_circuit(harmonic_degrees)
+        print("rot_harmonic_circuit:")
+        print(rot_harmonic_circuit)
 
         harmony_notes_factor = 2**(species - 1)  # Number of harmony notes for each melody note
         num_composition_bits = TOTAL_MELODY_NOTES * (harmony_notes_factor + 1) * NUM_CIRCUIT_WIRES
@@ -100,7 +104,7 @@ def toy_piano_counterpoint():
                 p.inst(copy.deepcopy(rot_melodic_circuit))
                 p.inst().measure(0, 0).measure(1, 1) \
                     .measure(2, 2)
-                print("rot_melodic_circuit:")
+                #print("rot_melodic_circuit:")
                 #print(p)
 
                 result = qvm.run(p, [2, 1, 0], num_runs)
@@ -116,7 +120,7 @@ def toy_piano_counterpoint():
                 #print(measured_pitch)
 
             # Now compute a harmony note for the melody note
-            print("Now compute a harmony note for the melody notev")
+            #print("Now compute a harmony note for the melody notev")
             p = Program()
 
             for bit_idx in range(0, NUM_CIRCUIT_WIRES):
@@ -128,7 +132,7 @@ def toy_piano_counterpoint():
             p.inst(copy.deepcopy(rot_harmonic_circuit))
             p.inst().measure(0, 0).measure(1, 1) \
                 .measure(2, 2)
-            print("rot_harmonic_circuit:")
+            #print("rot_harmonic_circuit:")
             #print(p)
 
             result = qvm.run(p, [2, 1, 0], num_runs)
@@ -146,7 +150,7 @@ def toy_piano_counterpoint():
 
 
             # Now compute melody notes to follow the harmony note
-            print("Now compute melody notes to follow the harmony note")
+            #print("Now compute melody notes to follow the harmony note")
             for harmony_note_idx in range(1, harmony_notes_factor):
                 p = Program()
 
@@ -161,7 +165,7 @@ def toy_piano_counterpoint():
                 p.inst(copy.deepcopy(rot_melodic_circuit))
                 p.inst().measure(0, 0).measure(1, 1) \
                     .measure(2, 2)
-                print("rot_melodic_circuit:")
+                #print("rot_melodic_circuit:")
                 #print(p)
 
                 result = qvm.run(p, [2, 1, 0], num_runs)
