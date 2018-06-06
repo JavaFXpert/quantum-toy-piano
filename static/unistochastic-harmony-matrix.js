@@ -2,7 +2,7 @@
 //TODO: Fold this back into unistochastic-matrix component
 
 // constant for number of degrees of freedom in 8 dimensional rotations
-var rotationDegOfFreedom = 28;
+var rotationDegOfFreedom = 6;
 
 // Object wrapper for reactive variables.
 // TODO: Ascertain how to not have to use a wrapper to make reactive variables stay in sync with

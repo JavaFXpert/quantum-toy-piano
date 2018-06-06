@@ -1,11 +1,12 @@
 //TODO: Allow complex numbers in unitary matrix
 
-// constant for number of degrees of freedom in 8 dimensional rotations
+// constant for number of degrees of freedom in 4 dimensional rotations
 var rotationDegOfFreedom = 6;
 
 // Object wrapper for reactive variables.
 // TODO: Ascertain how to not have to use a wrapper to make reactive variables stay in sync with
 //       the Vue data.
+
 var rv = {
 // The rotation angles to observe
   rotationangles: [
@@ -16,6 +17,20 @@ var rv = {
     { label: "DF", value: 0 },
     { label: "EF", value: 0 }
   ],
+
+
+/*
+var rv = {
+// The rotation angles to observe
+  rotationangles: [
+    { label: "CD", value: 0 },
+    { label: "CE", value: 0 },
+    { label: "CF", value: 0 },
+    { label: "DE", value: 0 },
+    { label: "DF", value: 0 },
+    { label: "EF", value: 0 }
+  ],
+  */
 
   // Specified resolution of rotation angle degrees at a time to move when optimizing unistochastic matrix
   degreedecimals: 0,
@@ -99,8 +114,8 @@ Vue.component('unistochastic-matrix', {
           '<tr v-for="(srow, srowIdx) in 3">' +
             '<td v-for="(scol, scolIdx) in 2">' +
               '<label>{{rv.rotationangles [(srowIdx) * 2 + (scolIdx)].label}}</label>' +
-              //'<input type="range" v-model="rv.rotationangles [(srowIdx) * 4 + (scolIdx)].value" min="0" max="359" :step="Math.pow(10, -rv.degreedecimals)" class="rot-slider">' +
-              '<input type="range" v-model="rv.rotationangles [(srowIdx) * 4 + (scolIdx)].value" min="0" max="359" :step="22.5" class="rot-slider">' +
+              //'<input type="range" v-model="rv.rotationangles [(srowIdx) * 2 + (scolIdx)].value" min="0" max="359" :step="Math.pow(10, -rv.degreedecimals)" class="rot-slider">' +
+              '<input type="range" v-model="rv.rotationangles [(srowIdx) * 2 + (scolIdx)].value" min="0" max="359" :step="22.5" class="rot-slider">' +
             '</td>' +
           '</tr>' +
         '</tbody>' +
@@ -108,7 +123,7 @@ Vue.component('unistochastic-matrix', {
     '</div>',
   computed: {
     matrixAsArray: function () {
-      //return math.eye(8).valueOf();
+      //return math.eye(4).valueOf();
       return this.computeStochasticMatrix(this.createAnglesArrayFromRotationAngles(), this.showuni).valueOf();
     }
   },
@@ -270,7 +285,7 @@ Vue.component('unistochastic-matrix', {
       for (var epochIdx = 0; epochIdx < rv.numepochs; epochIdx++) {
         //console.log("epochIdx: " + epochIdx);
         for (var dofIdx = 0; dofIdx < rotationDegOfFreedom; dofIdx++) {
-          console.log("dofIdx: " + dofIdx);
+          //console.log("dofIdx: " + dofIdx);
           var curAngRad = arrayOfAnglesRad[dofIdx];
           var proposedCurAngRad = curAngRad;
           //console.log("  curAngRad: " + curAngRad);
