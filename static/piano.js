@@ -44,11 +44,15 @@ var vm = Vue.component('piano-component', {
         '<button @click="request_counterpoint(3)">Species 3</button>' +
         '<button v-if="playing_time&lt;=1" @click="startplay">Play<i class="fa fa-play"></i></button>' +
         '<button v-if="playing_time&gt;1" @click="stopplay">Stop<i class="fa fa-pause"></i></button>' +
+        '<br/><br/>' +
+        '<input type="checkbox" id="simulatorselect" @click="togglesimulator" checked="usesimulator"/>' +
+        '<label for="simulatorselect" class="mr-4">Use simulator</label>' +
         '<h4>{{playing_time+record_time}}</h4>' +
       '</div>' +
     '</div>',
   data: function () {
     return {
+      usesimulator: true,
       sounddata: soundpack,
       notes: [{"num": 1, "time": 150}, {"num": 1, "time": 265}, {"num": 5, "time": 380}, {
         "num": 5,
@@ -98,6 +102,9 @@ var vm = Vue.component('piano-component', {
     }
   },
   methods: {
+    togglesimulator: function () {
+      this.usesimulator = !(this.usesimulator);
+    },
     playnote: function(id,volume){
       if (id>0){
         var audio_obj=$("audio[data-num='"+id+"']")[0];
@@ -170,7 +177,8 @@ var vm = Vue.component('piano-component', {
       axios.get(quantum_music_host +
           "/toy_piano_counterpoint?pitch_index=" + this.initial_pitch_idx + "&species=" + species_arg +
           "&melodic_degrees=" + harmonyDegreesStr +
-          "&harmonic_degrees=" + melodyDegreesStr)
+          "&harmonic_degrees=" + melodyDegreesStr +
+          "&use_simulator=" + this.usesimulator)
           .then(function (response) {
             vobj.load_notes_from_response(response);
           })

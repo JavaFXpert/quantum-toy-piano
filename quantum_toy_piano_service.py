@@ -58,6 +58,9 @@ def toy_piano_counterpoint():
     harmonic_degrees = request.args['harmonic_degrees'].split(",")
     #print("harmonic_degrees: ", harmonic_degrees)
 
+    use_simulator = bool(request.args['use_simulator'])
+    print("use_simulator: ", use_simulator)
+
     if (len(melodic_degrees) == DEGREES_OF_FREEDOM and
             len(harmonic_degrees) == DEGREES_OF_FREEDOM and
             1 <= species <= 3 and
