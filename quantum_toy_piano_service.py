@@ -22,8 +22,8 @@ NUM_PITCHES = 4
 DIATONIC_SCALE_OCTAVE_PITCHES = 8
 NUM_CIRCUIT_WIRES = 3
 TOTAL_MELODY_NOTES = 7
-# RY_RAD_ADJ = -np.pi/4  # adjustment in radians to each RY rotation in the circuit to compensate for QPU inaccuracies
-RY_RAD_ADJ = 0
+RY_RAD_ADJ_MELODY = -np.pi/8  # adjustment in radians to each RY rotation in the circuit to compensate for QPU inaccuracies
+RY_RAD_ADJ_HARMONY = 0
 
 ###
 # Produces a musical (specifically second-species counterpoint) composition for
@@ -77,7 +77,7 @@ def toy_piano_counterpoint():
             0 <= pitch_index < NUM_PITCHES):
 
         #TODO: Move/change this
-        rot_melodic_circuit = compute_circuit(melodic_degrees, 0) if use_simulator else compute_circuit(melodic_degrees, RY_RAD_ADJ)
+        rot_melodic_circuit = compute_circuit(melodic_degrees, 0) if use_simulator else compute_circuit(melodic_degrees, RY_RAD_ADJ_MELODY)
 
         if not use_simulator:
             rot_melodic_circuit = compiler.compile(rot_melodic_circuit)
@@ -85,7 +85,7 @@ def toy_piano_counterpoint():
         print("rot_melodic_circuit:")
         print(rot_melodic_circuit)
 
-        rot_harmonic_circuit = compute_circuit(harmonic_degrees, 0) if use_simulator else compute_circuit(harmonic_degrees, RY_RAD_ADJ)
+        rot_harmonic_circuit = compute_circuit(harmonic_degrees, 0) if use_simulator else compute_circuit(harmonic_degrees, RY_RAD_ADJ_HARMONY)
 
         if not use_simulator:
             rot_harmonic_circuit = compiler.compile(rot_harmonic_circuit)
@@ -99,8 +99,8 @@ def toy_piano_counterpoint():
         if use_simulator:
             q_con = api.QVMConnection()
         else:
-            q_con = api.QVMConnection()
-            # q_con = api.QPUConnection(quantum_device)
+            # q_con = api.QVMConnection()
+            q_con = api.QPUConnection(quantum_device)
 
         composition_bits = [0] * num_composition_bits
 
