@@ -22,7 +22,8 @@ NUM_PITCHES = 4
 DIATONIC_SCALE_OCTAVE_PITCHES = 8
 NUM_CIRCUIT_WIRES = 3
 TOTAL_MELODY_NOTES = 7
-RY_RAD_ADJ_MELODY = -np.pi/8  # adjustment in radians to each RY rotation in the circuit to compensate for QPU inaccuracies
+# RY_RAD_ADJ_MELODY = -np.pi/8  # adjustment in radians to each RY rotation in the circuit to compensate for QPU inaccuracies
+RY_RAD_ADJ_MELODY = 0
 RY_RAD_ADJ_HARMONY = 0
 
 ###
