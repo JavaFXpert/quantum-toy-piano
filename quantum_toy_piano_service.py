@@ -1,6 +1,6 @@
 from flask import Flask, jsonify, request
 from pyquil.quil import Program
-from pyquil.quilbase import RawInstr
+from pyquil.quilbase import RawInstr, Pragma
 import pyquil.api as api
 from pyquil.gates import *
 from math import *
@@ -81,7 +81,17 @@ def toy_piano_counterpoint():
         rot_melodic_circuit = compute_circuit(melodic_degrees, 0) if use_simulator else compute_circuit(melodic_degrees, RY_RAD_ADJ_MELODY)
 
         if not use_simulator:
-            rot_melodic_circuit = compiler.compile(rot_melodic_circuit)
+            # TODO: Put back in
+            # rot_melodic_circuit = compiler.compile(rot_melodic_circuit)
+
+            # TODO: Remove these lines
+            tmp_rot_melodic_circuit = compiler.compile(rot_melodic_circuit)
+            # print("tmp_rot_melodic_circuit:")
+            # print(tmp_rot_melodic_circuit)
+            rot_melodic_circuit = Program()
+            for instruction in tmp_rot_melodic_circuit.instructions:
+                if not isinstance(instruction, Pragma):
+                    rot_melodic_circuit.inst(instruction)
 
         print("rot_melodic_circuit:")
         print(rot_melodic_circuit)
@@ -89,7 +99,17 @@ def toy_piano_counterpoint():
         rot_harmonic_circuit = compute_circuit(harmonic_degrees, 0) if use_simulator else compute_circuit(harmonic_degrees, RY_RAD_ADJ_HARMONY)
 
         if not use_simulator:
-            rot_harmonic_circuit = compiler.compile(rot_harmonic_circuit)
+            # TODO: Put back in
+            # rot_harmonic_circuit = compiler.compile(rot_harmonic_circuit)
+
+            # TODO: Remove these lines
+            tmp_rot_harmonic_circuit = compiler.compile(rot_harmonic_circuit)
+            # print("tmp_rot_harmonic_circuit:")
+            # print(tmp_rot_harmonic_circuit)
+            rot_harmonic_circuit = Program()
+            for instruction in tmp_rot_harmonic_circuit.instructions:
+                if not isinstance(instruction, Pragma):
+                    rot_harmonic_circuit.inst(instruction)
 
         print("rot_harmonic_circuit:")
         print(rot_harmonic_circuit)
@@ -116,6 +136,7 @@ def toy_piano_counterpoint():
 
         num_runs = 1
 
+        # Compute notes for the main melody
         for melody_note_idx in range(0, TOTAL_MELODY_NOTES):
             #
             if (melody_note_idx < TOTAL_MELODY_NOTES - 1):
