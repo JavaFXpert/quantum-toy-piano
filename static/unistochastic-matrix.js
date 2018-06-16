@@ -77,31 +77,35 @@ Vue.component('unistochastic-matrix', {
       '</table>' +
       '<br/>' +
       '<div class="ml-2">' +
-        '<button @click="optimizerotationangles" class="mr-4">Optimize</button>' +
+        '<button @click="optimizerotationangles" class="mr-4">Optimize Rotations</button>' +
         '<input type="checkbox" id="unistochastic" @click="toggleuni" checked="showuni"/>' +
-        '<label for="unistochastic" class="mr-4">Unistochastic</label>' +
-        '<label>Zeros penalty factor:</label>' +
-        '<input type="range" v-model="rv.zeroelementpenaltyfactor" min="0.0" max="1.0" step="0.1"/>' +
-        '<span>{{rv.zeroelementpenaltyfactor}}</span><br/>' +
-        '<label>Degree decimals:</label>' +
-        '<input type="range" v-model="rv.degreedecimals" min="0" max="2" step="1" id="degree-decimals"/>' +
-        '<span class="mr-4">{{rv.degreedecimals}}</span>' +
-        '<label>Epochs:</label>' +
-        '<input type="range" v-model="rv.numepochs" min="1" max="50" step="1">' +
-        '<span>{{rv.numepochs}}</span><br/>' +
-        '<span>{{ "Total cost: " + Math.round(rv.totalcostbetweenmatrices * 100) / 100 }}' +
-          '{{" = Euclidean distance: " + Math.round(rv.euclideandistance * 100) / 100}}' +
-          '{{" + Zeros distance penalty: " + Math.round(rv.addedpenalty * 100) / 100 }}' +
-        '</span>' +
+        '<label for="unistochastic" class="mr-4">&nbsp;Show Probabilities</label>' +
+
+        // UNCOMMENT THE FOLLOWING LINES TO MAKE THE FINE TUNING CONTROLS APPEAR
+        // '<label>Zeros penalty factor:</label>' +
+        // '<input type="range" v-model="rv.zeroelementpenaltyfactor" min="0.0" max="1.0" step="0.1"/>' +
+        // '<span>{{rv.zeroelementpenaltyfactor}}</span><br/>' +
+        // '<label>Degree decimals:</label>' +
+        // '<input type="range" v-model="rv.degreedecimals" min="0" max="2" step="1" id="degree-decimals"/>' +
+        // '<span class="mr-4">{{rv.degreedecimals}}</span>' +
+        // '<label>Epochs:</label>' +
+        // '<input type="range" v-model="rv.numepochs" min="1" max="50" step="1">' +
+        // '<span>{{rv.numepochs}}</span><br/>' +
+        // '<span>{{ "Total cost: " + Math.round(rv.totalcostbetweenmatrices * 100) / 100 }}' +
+        //   '{{" = Euclidean distance: " + Math.round(rv.euclideandistance * 100) / 100}}' +
+        //   '{{" + Zeros distance penalty: " + Math.round(rv.addedpenalty * 100) / 100 }}' +
+        // '</span>' +
+
       '</div>' +
       '<br/>' +
+      '<label>Degree of Freedom Rotations:</label>' +
       '<table>' +
         '<tbody>' +
           '<tr v-for="(srow, srowIdx) in 3">' +
             '<td v-for="(scol, scolIdx) in 2">' +
               '<label>{{rv.rotationangles [(srowIdx) * 2 + (scolIdx)].label}}</label>' +
-              //'<input type="range" v-model="rv.rotationangles [(srowIdx) * 2 + (scolIdx)].value" min="0" max="359" :step="Math.pow(10, -rv.degreedecimals)" class="rot-slider">' +
-              '<input type="range" v-model="rv.rotationangles [(srowIdx) * 2 + (scolIdx)].value" min="0" max="359" :step="22.5" class="rot-slider">' +
+              '<input type="range" v-model="rv.rotationangles [(srowIdx) * 2 + (scolIdx)].value" min="0" max="359" :step="Math.pow(10, -rv.degreedecimals)" class="rot-slider">' +
+              // '<input type="range" v-model="rv.rotationangles [(srowIdx) * 2 + (scolIdx)].value" min="0" max="359" :step="22.5" class="rot-slider">' +
             '</td>' +
           '</tr>' +
         '</tbody>' +
