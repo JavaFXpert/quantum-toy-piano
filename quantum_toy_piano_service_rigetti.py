@@ -9,10 +9,11 @@ from s04_rotcircuit import *
 
 #FOR COMPILERCONNECTION
 from pyquil.api import CompilerConnection, get_devices
-devices = get_devices(as_dict=True)
-print(devices)
-quantum_device = devices['8Q-Agave']
-compiler = CompilerConnection(quantum_device)
+
+# compiler = CompilerConnection(quantum_device)
+# devices = get_devices(as_dict=True)
+# print(devices)
+# quantum_device = devices['8Q-Agave']
 
 
 app = Flask(__name__)
@@ -72,6 +73,24 @@ def toy_piano_counterpoint():
     use_simulator = request.args['use_simulator'].lower() == "true"
     print("use_simulator: ", use_simulator)
 
+    compiler = None
+    quantum_device = None
+    q_con = None
+
+    if use_simulator:
+        q_con = api.QVMConnection()
+    else:
+        quantum_device = available_quantum_device()
+        if quantum_device is not None:
+            compiler = CompilerConnection(quantum_device)
+            print('quantum_device: ', quantum_device)
+            # q_con = api.QPUConnection(available_quantum_device())
+
+            q_con = api.QVMConnection()
+        else:
+            # TODO: Test this condition
+            q_con = api.QVMConnection()
+
     if (len(melodic_degrees) == DEGREES_OF_FREEDOM and
             len(harmonic_degrees) == DEGREES_OF_FREEDOM and
             1 <= species <= 3 and
@@ -116,12 +135,6 @@ def toy_piano_counterpoint():
 
         harmony_notes_factor = 2**(species - 1)  # Number of harmony notes for each melody note
         num_composition_bits = TOTAL_MELODY_NOTES * (harmony_notes_factor + 1) * NUM_CIRCUIT_WIRES
-
-        if use_simulator:
-            q_con = api.QVMConnection()
-        else:
-            # q_con = api.QVMConnection()
-            q_con = api.QPUConnection(quantum_device)
 
         composition_bits = [0] * num_composition_bits
 
@@ -334,6 +347,18 @@ def create_toy_piano(melody_note_nums, harmony_note_nums):
     sorted_notes = sorted(notes, key=lambda k: k['time'])
 
     return sorted_notes
+
+def available_quantum_device():
+    # Returns first available quantum device
+    devices_dict = get_devices(as_dict=True)
+    print('devices_dict: ', devices_dict)
+
+    for device in devices_dict.values():
+        if (device.is_online()):
+            return device
+
+    # If we got here, there weren't any devices online
+    return None
 
 if __name__ == '__main__':
     # app.run()
