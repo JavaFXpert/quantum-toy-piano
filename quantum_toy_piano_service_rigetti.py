@@ -82,13 +82,15 @@ def toy_piano_counterpoint():
     else:
         quantum_device = available_quantum_device()
         if quantum_device is not None:
-            compiler = CompilerConnection(quantum_device)
             print('quantum_device: ', quantum_device)
-            # q_con = api.QPUConnection(available_quantum_device())
+            compiler = CompilerConnection(quantum_device)
+            q_con = api.QPUConnection(quantum_device)
 
-            q_con = api.QVMConnection()
+            # q_con = api.QVMConnection()
         else:
             # TODO: Test this condition
+            print('No quantum devices available, using simulator')
+            use_simulator = True
             q_con = api.QVMConnection()
 
     if (len(melodic_degrees) == DEGREES_OF_FREEDOM and
@@ -97,7 +99,7 @@ def toy_piano_counterpoint():
             0 <= pitch_index < NUM_PITCHES):
 
         #TODO: Move/change this
-        rot_melodic_circuit = compute_circuit(melodic_degrees, 0) if use_simulator else compute_circuit(melodic_degrees, RY_RAD_ADJ_MELODY)
+        rot_melodic_circuit = compute_circuit(melodic_degrees)
 
         if not use_simulator:
             # TODO: Put back in
@@ -115,7 +117,7 @@ def toy_piano_counterpoint():
         print("rot_melodic_circuit:")
         print(rot_melodic_circuit)
 
-        rot_harmonic_circuit = compute_circuit(harmonic_degrees, 0) if use_simulator else compute_circuit(harmonic_degrees, RY_RAD_ADJ_HARMONY)
+        rot_harmonic_circuit = compute_circuit(harmonic_degrees)
 
         if not use_simulator:
             # TODO: Put back in
