@@ -4,6 +4,12 @@ The Quantum Toy Piano application enables a user to compose music that is perfor
 
 ![third-species-performance](docimages/third-species-performance.png)
 
+FIG. 1. Music score captured from performance of a quantum musical composition
+
+
+
+To create the quantum musical composition, the user first supplies the desired probabilities for TODO: LEFT OFF HERE
+
 ## Installation
 
 To install.
