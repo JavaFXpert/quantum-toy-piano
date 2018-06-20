@@ -166,8 +166,8 @@ def toy_piano_counterpoint():
                 p.inst(copy.deepcopy(rot_melodic_circuit))
                 p.inst().measure(0, 0).measure(1, 1) \
                     .measure(2, 2)
-                #print("rot_melodic_circuit:")
-                #print(p)
+                # print("rot_melodic_circuit:")
+                # print(p)
 
                 result = q_con.run(p, [2, 1, 0], num_runs)
                 bits = result[0]
@@ -194,8 +194,8 @@ def toy_piano_counterpoint():
             p.inst(copy.deepcopy(rot_harmonic_circuit))
             p.inst().measure(0, 0).measure(1, 1) \
                 .measure(2, 2)
-            #print("rot_harmonic_circuit:")
-            #print(p)
+            # print("rot_harmonic_circuit:")
+            # print(p)
 
             result = q_con.run(p, [2, 1, 0], num_runs)
             bits = result[0]
