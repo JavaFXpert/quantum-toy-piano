@@ -1,4 +1,5 @@
 from flask import Flask, jsonify, request
+from flask_cors import CORS
 from pyquil.quil import Program
 from pyquil.quilbase import RawInstr, Pragma
 import pyquil.api as api
@@ -17,6 +18,7 @@ from pyquil.api import CompilerConnection, get_devices
 
 
 app = Flask(__name__)
+CORS(app)
 
 DEGREES_OF_FREEDOM = 6
 NUM_PITCHES = 4
