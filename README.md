@@ -94,7 +94,7 @@ None yet
 
 ## Questions / Feedback
 
-Please reach out to me on the [Rigetti-Forest](https://www.rigetti.com/community) Slack community
+Please reach out to me (James Weaver) on the [Rigetti-Forest](https://www.rigetti.com/community) Slack community
 
 ## References
 
