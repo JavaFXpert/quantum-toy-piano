@@ -57,9 +57,9 @@ RY_RAD_ADJ_HARMONY = 0
 @app.route('/toy_piano_counterpoint')
 def toy_piano_counterpoint():
     pitch_index = int(request.args['pitch_index'])
-    if (pitch_index >= NUM_PITCHES):
-        pitch_index %= (DIATONIC_SCALE_OCTAVE_PITCHES - 1)
-    #print("pitch_index: ", pitch_index)
+    pitch_index %= (DIATONIC_SCALE_OCTAVE_PITCHES - 1)
+    if pitch_index >= NUM_PITCHES:
+        pitch_index = 0
 
     species = int(request.args['species'])
     #print("species: ", species)
