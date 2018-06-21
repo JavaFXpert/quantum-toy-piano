@@ -78,7 +78,7 @@ To install and run Quantum Music Composer for Rigetti quantum computers:
 2. Install [Flask](http://flask.pocoo.org/)
 3. Install [Flask-CORS](https://flask-cors.readthedocs.io) or a CORS extension in your browser
 4. Clone the [JavaFXpert/quantum-toy-piano](https://github.com/JavaFXpert/quantum-toy-piano) project from GitHub.
-5. Install the latest version of [pyQuil](https://www.rigetti.com/forest)
+5. Install the latest version of [pyQuil](https://www.rigetti.com/forest), and request an API key. If you want to use a real quantum computer (i.e. with the **Use simulator** checkbox unchecked), you'll need to request upgraded access to the QPU (quantum proccessing unit).
 
 ## Running
 
