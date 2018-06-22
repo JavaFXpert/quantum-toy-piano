@@ -93,6 +93,7 @@ To install and run Quantum Music Composer for Rigetti quantum computers:
 | Question                                                     | Answer                                                       |
 | ------------------------------------------------------------ | ------------------------------------------------------------ |
 | Is Quantum Music Composer available for other quantum computers besides Rigetti? | Yes. There is a [version for IBM quantum computers](https://github.com/JavaFXpert/quantum-toy-piano-ibmq) |
+| Why can't I hear the notes being played?                     | There currently seems to be an issue with hearing the notes (wav files) in Safari browsers. I'm checking into a workaround. |
 
 ## Questions / Feedback
 
