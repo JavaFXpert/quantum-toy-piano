@@ -72,7 +72,7 @@ As a result, the probabilities of each **Quantum State** in Fig. 7 being the mea
 
 ## Rock on!
 
-Now that you know how the Quantum Music Composer application creates circuits that inform a quantum computer of your melodic and harmonic preferences, please try it out and jam with your favorite quantum computer or simulator.
+Now that you know how the Quantum Music Composer application creates circuits that inform a quantum computer of your melodic and harmonic preferences, please try it out and jam with your favorite quantum computer or simulator!
 
 ## References
 
