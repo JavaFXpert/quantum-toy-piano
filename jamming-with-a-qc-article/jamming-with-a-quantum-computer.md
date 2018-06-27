@@ -57,7 +57,7 @@ As mentioned earlier, quantum gates are represented by unitary matrices. Given a
 
 *FIG. 6. Quantum circuit that realizes the unitary matrix*
 
-The inputs to this quantum circuit are quantum states that represent each of the four note pitches, as shown in Fig. 7. Keep in mind that the top wire of the circuit is the least significant qubit, so for example if the input note pitch is **D**, the bottom wire input is ![qstate-0-small](qstate-0-small.png) and the top wire input is ![qstate-01-small](qstate-01-small.png).
+The inputs to this quantum circuit are quantum states that represent each of the four note pitches, as shown in Fig. 7. Keep in mind that the top wire of the circuit is the least significant qubit, so for example if the input note pitch is **D**, the bottom wire input is ![qstate-0-small](qstate-0-small.png) and the top wire input is ![qstate-1-small](qstate-1-small.png)
 
 | Note Pitch | Quantum State                           |
 | ---------- | --------------------------------------- |
