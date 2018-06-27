@@ -68,7 +68,7 @@ The inputs to this quantum circuit are quantum states that represent each of the
 
 *FIG. 7. Note pitches and corresponding input to quantum circuit*
 
-As a result, the probabilities of each **Quantum State** in Fig. 7 being the measured state should reflect the desired probabilities entered into the doubly-stochastic matrix (shown in Fig. 2) by the user. Each measured state is then used as input to the circuit until the entire melody is improvised. The same steps outlined previously also apply to improvising harmonies in the application, using presumably difference desired probabilities.
+As a result, the probabilities of each **Quantum State** in Fig. 7 being the measured state should reflect the desired probabilities entered into the doubly-stochastic matrix (shown in Fig. 2) by the user. Each measured state is then used as input to the circuit until the entire melody is improvised. The same steps outlined previously also apply to improvising harmonies in the application, using presumably different desired probabilities.
 
 ## Rock on!
 
