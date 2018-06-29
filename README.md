@@ -4,7 +4,7 @@ The Quantum Music Composer application enables a user to compose music that is p
 
 ![third-species-performance](docimages/third-species-performance.png)
 
-FIG. 1. Musical score captured from the performance of a quantum musical composition [[play audio](audio/rigetti-qpu-third.wav)]
+FIG. 1. Musical score captured from the performance of a quantum musical composition [[play audio](http://learnjavafx.typepad.com/qmcaudio/rigetti-qpu-third.wav)]
 
 
 
