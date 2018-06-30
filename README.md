@@ -44,7 +44,7 @@ The buttons labeled **Species** refer to three of the five [species of counterpo
 
 ![first-species-performance](docimages/first-species-performance.png)
 
-FIG. 5. Musical score captured from the performance of a first species composition
+FIG. 5. Musical score captured from the performance of a first species composition [[play]](https://vimeo.com/277747682)
 
 
 
