@@ -50,7 +50,7 @@ FIG. 5. Musical score captured from the performance of a first species compositi
 
 ![second-species-performance](docimages/second-species-performance.png)
 
-FIG. 6. Musical score captured from the performance of a second species composition
+FIG. 6. Musical score captured from the performance of a second species composition [play](https://vimeo.com/277746965)
 
 
 
