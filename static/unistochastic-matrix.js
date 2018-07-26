@@ -50,7 +50,10 @@ var rv = {
   addedpenalty: 0.0,
 
   // Calculated total cost between desired matrix and unistochastic matrix
-  totalcostbetweenmatrices: 0.0
+  totalcostbetweenmatrices: 0.0,
+
+  // Melody is in Bell state
+  bellState: false
 };
 
 // register the unistochastic-matrix component
@@ -92,7 +95,7 @@ Vue.component('unistochastic-matrix', {
       '</table>' +
       '<br/>' +
       '<div class="ml-2">' +
-        '<button @click="optimizerotationangles" class="mr-4">Optimize Rotations</button>' +
+        '<button @click="optimizerotationangles" class="mr-4">Optimize Matrix</button>' +
         '<input type="checkbox" id="unistochastic" @click="toggleuni" checked="showuni"/>' +
         '<label for="unistochastic" class="mr-4">&nbsp;Show Probabilities</label>' +
 
@@ -129,6 +132,8 @@ Vue.component('unistochastic-matrix', {
       '<button @click="preset(1)">Desc</button>' +
       '<button @click="preset(2)">Cpnt</button>' +
       '<button @click="preset(3)">Bell</button>' +
+      '<button @click="preset(4)">Equ</button>' +
+      '<button @click="preset(5)">Iden</button>' +
     '</div>',
   computed: {
     matrixAsArray: function () {
@@ -148,6 +153,7 @@ Vue.component('unistochastic-matrix', {
     },
 
     preset: function(presetnum) {
+      rv.bellState = false;
       if (presetnum == 0) {
         // Ascending melody
         this.setrotationangles(['50.5', '238', '270', '215', '199.7', '205.7']);
@@ -163,6 +169,15 @@ Vue.component('unistochastic-matrix', {
       else if (presetnum == 3) {
         // Bell states
         this.setrotationangles([180, 225, 0, 0, 225, 90]);
+        rv.bellState = true;
+      }
+      else if (presetnum == 4) {
+        // Equal probabilities
+        this.setrotationangles(['224.9', '215.3', '210', '150.1', '215.3', '225']);
+      }
+      else if (presetnum == 5) {
+        // Identity matrix
+        this.setrotationangles([0, 0, 0, 0, 0, 0]);
       }
     },
 
@@ -173,6 +188,7 @@ Vue.component('unistochastic-matrix', {
     },
 
     optimizerotationangles: function() {
+      rv.bellState = false;
       var angles180DegreeArray = Array(rotationDegOfFreedom).fill(180);
       this.setrotationangles(angles180DegreeArray)
 

@@ -14,14 +14,39 @@
  * limitations under the License.
  */
 
+// var perf = {
+//   meas: []
+// };
+
+var numInstruments = 3;
+var instrumentsOffset = 29;
+var userInstrument = 0;
+var qcInstrument = 1;
+var bellInstrument = 2;
 var soundpack=[];
-var soundpack_index=[1,1.5,2,2.5,3,4,4.5,5,5.5,6,6.5,7,8,8.5,9,9.5,10,11,11.5,12,12.5,13,13.5,14,15];
-for(var i=0;i<soundpack_index.length;i++){
-  soundpack.push({
-    number: soundpack_index[i],
-    //url: "https://awiclass.monoame.com/pianosound/set/"+ soundpack_index[i]+".wav"
-    url: "piano-sounds/"+ soundpack_index[i]+".wav"
-  });
+var soundpack_index=[1,1.5,2,2.5,3,4,4.5,5,5.5,6,6.5,7,
+  8,8.5,9,9.5,10,11,11.5,12,12.5,13,13.5,14,
+  15,15.5,16,16.5,17,18,18.5,19,19.5,20,20.5,21,
+  22,22.5,23,23.5,24,25,25.5,26,26.5,27,27.5,28,29];
+for (var instNum = 0; instNum < numInstruments; instNum++) {
+  for (var idxA = 0; idxA < soundpack_index.length; idxA++) {
+    soundpack.push({
+      number: soundpack_index[idxA],
+      url: "piano-sounds/" + soundpack_index[idxA] + "-st.wav"
+    });
+  }
+  for (var idxB = 0; idxB < soundpack_index.length; idxB++) {
+    soundpack.push({
+      number: soundpack_index[idxB] + instrumentsOffset,
+      url: "acoustic-guitar/" + soundpack_index[idxB] + "-ag.wav"
+    });
+  }
+  for (var idxC = 0; idxC < soundpack_index.length; idxC++) {
+    soundpack.push({
+      number: soundpack_index[idxC] + instrumentsOffset * 2,
+      url: "bell-sounds/" + soundpack_index[idxC] + "-be.wav"
+    });
+  }
 }
 
 var vm = Vue.component('piano-component', {
@@ -47,21 +72,23 @@ var vm = Vue.component('piano-component', {
         '</div>' +
       '</div>' +
       '<div class="controls">' +
-        '<ul class="notes_list" v-if="notes.length&gt;0">' +
-          '<li v-for="(note,id) in notes" :class="now_note_id-1==id?&quot;playing&quot;:&quot;&quot;">' +
-            '<div class="num">{{pitches[note.num - 1]}}</div>' +
-            '<div class="time">{{note.time}}</div>' +
-          '</li>' +
-        '</ul>' +
         '<br/>' +
         '<input type="checkbox" id="simulatorselect" @click="togglesimulator" checked="usesimulator"/>' +
         '<label for="simulatorselect" class="mr-4">&nbsp;Use simulator</label>' +
         '<br/>' +
-        '<button @click="request_counterpoint(1)">Species 1</button>' +
-        '<button @click="request_counterpoint(2)">Species 2</button>' +
-        '<button @click="request_counterpoint(3)">Species 3</button>' + '&nbsp;' +
+        '<button v-if="!useharmony()" @click="request_counterpoint(1)">Melody</button>' +
+        '<button v-if="useharmony()" @click="request_counterpoint(1)">Species 1</button>' +
+        '<button v-if="useharmony()" @click="request_counterpoint(2)">Species 2</button>' +
+        '<button v-if="useharmony()" @click="request_counterpoint(3)">Species 3</button>' + '&nbsp;' +
         '<button v-if="playing_time&lt;=1" @click="startplay">Play<i class="fa fa-play"></i></button>' +
-        '<button v-if="playing_time&gt;1" @click="stopplay">Stop<i class="fa fa-pause"></i></button>' +
+        '<button v-if="playing_time&gt;1" @click="stopplay">Stop<i class="fa fa-pause"></i></button>' + '&nbsp;' +
+        '<button v-if="hasJamNotes" @click="jam(1)">J1</button>' +
+        '<button v-if="hasJamNotes" @click="jam(2)">J2</button>' +
+        '<button v-if="hasJamNotes" @click="jam(3)">J3</button>' +
+        '<button v-if="hasJamNotes" @click="jam(4)">J4</button>' +
+        '<button v-if="hasJamNotes" @click="jam(5)">J5</button>' +
+        '<button v-if="hasJamNotes&&useharmony()" @click="jam(10)">Jh</button>' +
+        '<button v-if="jamming">JAMMING...<i class="fa fa-play"></i></button>' +
         '<br/><br/>' +
         '<p>Choose a <a href="https://en.wikipedia.org/wiki/Counterpoint#Species_counterpoint" ' +
           'target="_blank"> counterpoint species</a> to perform by clicking one of the Species' +
@@ -69,22 +96,29 @@ var vm = Vue.component('piano-component', {
           ' you may optionally paste it into a Lilypond music score engraver. After clicking the OK' +
           ' button, click the Play button to hear a performance by the quantum computer or simulator' +
           ' of the quantum music you composed.</p>' +
+        '<ul class="notes_list" v-if="notes.length&gt;0">' +
+          '<li v-for="(note,id) in notes" :class="now_note_id-1==id?&quot;playing&quot;:&quot;&quot;">' +
+            '<div class="num">{{pitches[note.num - 1]}}</div>' +
+            '<div class="time">{{note.time}}</div>' +
+          '</li>' +
+        '</ul>' +
       '</div>' +
     '</div>',
   data: function () {
     return {
       usesimulator: true,
       sounddata: soundpack,
-      notes: [{"num": 1, "time": 150}, {"num": 1, "time": 265}, {"num": 5, "time": 380}, {
-        "num": 5,
-        "time": 501
-      }, {"num": 6, "time": 625}, {"num": 6, "time": 748}, {"num": 5, "time": 871}, {"num": 4, "time": 1126}, {
-        "num": 4,
-        "time": 1247
-      }, {"num": 3, "time": 1365}, {"num": 3, "time": 1477}, {"num": 2, "time": 1597}, {
-        "num": 2,
-        "time": 1714
-      }, {"num": 1, "time": 1837}],
+      // notes: [{"num": 1, "time": 150}, {"num": 1, "time": 265}, {"num": 5, "time": 380}, {
+      //   "num": 5,
+      //   "time": 501
+      // }, {"num": 6, "time": 625}, {"num": 6, "time": 748}, {"num": 5, "time": 871}, {"num": 4, "time": 1126}, {
+      //   "num": 4,
+      //   "time": 1247
+      // }, {"num": 3, "time": 1365}, {"num": 3, "time": 1477}, {"num": 2, "time": 1597}, {
+      //   "num": 2,
+      //   "time": 1714
+      // }, {"num": 1, "time": 1837}],
+      notes: [],
       now_note_id: 0,
       next_note_id: 0,
       playing_time: 0,
@@ -93,6 +127,7 @@ var vm = Vue.component('piano-component', {
       player: null,
       recorder: null,
       initial_pitch_idx: 0, // Zero-based initial pitch index for generating counterpoint
+      //TODO: Consider removing key attribute in display_keys
       display_keys: [
         {num: 1, key: 90, type: 'white'},
         {num: 1.5, key: 83, type: 'black'},
@@ -118,14 +153,70 @@ var vm = Vue.component('piano-component', {
         {num: 13, key: 89, type: 'white'},
         {num: 13.5, key: 55, type: 'black'},
         {num: 14, key: 85, type: 'white'},
-        {num: 15, key: 73, type: 'white'}
+        {num: 15, key: 73, type: 'white'},
+        {num: 15.5, key: 83, type: 'black'},
+        {num: 16, key: 88, type: 'white'},
+        {num: 16.5, key: 68, type: 'black'},
+        {num: 17, key: 67, type: 'white'},
+        {num: 18, key: 86, type: 'white'},
+        {num: 18.5, key: 71, type: 'black'},
+        {num: 19, key: 66, type: 'white'},
+        {num: 19.5, key: 72, type: 'black'},
+        {num: 20, key: 78, type: 'white'},
+        {num: 20.5, key: 74, type: 'black'},
+        {num: 21, key: 77, type: 'white'},
+        {num: 22, key: 81, type: 'white'},
+        {num: 22.5, key: 50, type: 'black'},
+        {num: 23, key: 87, type: 'white'},
+        {num: 23.5, key: 51, type: 'black'},
+        {num: 24, key: 69, type: 'white'},
+        {num: 25, key: 82, type: 'white'},
+        {num: 25.5, key: 53, type: 'black'},
+        {num: 26, key: 84, type: 'white'},
+        {num: 26.5, key: 54, type: 'black'},
+        {num: 27, key: 89, type: 'white'},
+        {num: 27.5, key: 55, type: 'black'},
+        {num: 28, key: 85, type: 'white'},
+        {num: 29, key: 73, type: 'white'}
       ],
-      pitches: ['C', 'D', 'E', 'F', 'G', 'A', 'B', 'C\'', 'D\'', 'E\'', 'F\'', 'G\'', 'A\'', 'B\'', 'C\'\'']
+      pitches: ['c', 'd', 'e', 'f', 'g', 'a', 'b',
+        'C', 'D', 'E', 'F', 'G', 'A', 'B',
+        'C\'', 'D\'', 'E\'', 'F\'', 'G\'', 'A\'', 'B\'',
+        'C\'\'', 'D\'\'', 'E\'\'', 'F\'\'', 'G\'\'', 'A\'\'', 'B\'\'', 'C\'\'\'',
+        'c', 'd', 'e', 'f', 'g', 'a', 'b',
+        'C', 'D', 'E', 'F', 'G', 'A', 'B',
+        'C\'', 'D\'', 'E\'', 'F\'', 'G\'', 'A\'', 'B\'',
+        'C\'\'', 'D\'\'', 'E\'\'', 'F\'\'', 'G\'\'', 'A\'\'', 'B\'\'', 'C\'\'\'',
+        'c', 'd', 'e', 'f', 'g', 'a', 'b',
+        'C', 'D', 'E', 'F', 'G', 'A', 'B',
+        'C\'', 'D\'', 'E\'', 'F\'', 'G\'', 'A\'', 'B\'',
+        'C\'\'', 'D\'\'', 'E\'\'', 'F\'\'', 'G\'\'', 'A\'\'', 'B\'\'', 'C\'\'\''
+      ],
+      numNoteOnEvents: 0,
+      measurements: {},
+      measurementsOriginal: {},
+      numBeatsUserPlaysInPhrase: 0,
+      numBeatsQcPlaysInPhrase: 0,
+      quarterNoteDuration: 0,
+      quarterNoteDurationMax: 250,
+      quarterNoteDurationDefault: 150,
+      quarterNoteDurationFactor: 0.25,
+      phraseStartTime: 0,
+      phraseEndTime: 0,
+      jamming: false,
+      hasJamNotes: false,
+      harmonyOnlyMode: false
     }
   },
   methods: {
+    useharmony: function() {
+      return hrv.harmonyenabled;
+    },
     togglesimulator: function () {
       this.usesimulator = !(this.usesimulator);
+    },
+    playing: function() {
+      return this.playing_time >= 1;
     },
     playnote: function(id,volume){
       if (id>0){
@@ -136,23 +227,44 @@ var vm = Vue.component('piano-component', {
       }
     },
     playnext: function(volume){
-      var play_note=this.notes[this.now_note_id].num;
-      this.playnote(play_note,volume);
-      this.now_note_id+=1;
-
-      if (this.now_note_id>=this.notes.length){
-        this.stopplay();
+      if (this.notes[this.now_note_id] != undefined) {
+        var play_note = this.notes[this.now_note_id].num;
+        this.playnote(play_note, volume);
+        this.now_note_id += 1;
       }
+      // TODO: Decide when to stop playing
+      // if (this.now_note_id>=this.notes.length){
+      //   this.stopplay();
+      // }
     },
     startplay: function(){
+      var timeoutTime = 5000;
       this.now_note_id=0;
       this.playing_time=0;
       this.next_note_id=0;
       var vobj=this;
       this.player=setInterval(function(){
-        if (vobj.playing_time>=vobj.notes[vobj.next_note_id].time){
-          vobj.playnext(1);
-          vobj.next_note_id++;
+        if (vobj.notes[vobj.next_note_id] != undefined) {
+          if (vobj.playing_time>=vobj.notes[vobj.next_note_id].time) {
+            vobj.playnext(1);
+            vobj.next_note_id++;
+            vobj.jamming = false;
+          }
+          else {
+            vobj.jamming = true;
+          }
+        }
+        else {
+          // Stop playing if it's been too long since last note was played
+          if (vobj.now_note_id > 0) {
+            var lastNotePlayed = vobj.notes[vobj.now_note_id - 1];
+            if (lastNotePlayed != undefined) {
+              if (vobj.playing_time > lastNotePlayed.time + timeoutTime) {
+                vobj.stopplay();
+                return;
+              }
+            }
+          }
         }
         vobj.playing_time++;
       },2);
@@ -170,7 +282,10 @@ var vm = Vue.component('piano-component', {
         return false
       var cur_id=this.now_note_id-1;
       if (cur_id<0) cur_id=0;
-      var num=this.notes[cur_id].num;
+      var num = 1.0;
+      if (this.notes[cur_id] != undefined) {
+        this.notes[cur_id].num;
+      }
       if (num==id)
         return true;
       return false;
@@ -182,27 +297,43 @@ var vm = Vue.component('piano-component', {
       else {
         this.initial_pitch_idx = id - 1;
       }
+      // TODO use volume from noteon event
       this.playnote(id,1);
     },
+    addnotedelayed: function(id, delayms){
+      this.notes.push({num: id, time: this.playing_time + delayms});
+      //this.playnote(id,1);
+    },
     request_counterpoint: function(species_arg) {
+      this.notes = [];
+      this.stopplay();
       var quantum_music_host = "http://localhost:5001";
-      harmonyDegrees = [];
-      melodyDegrees = [];
+
+      var melodyDegrees = [];
+      var harmonyDegrees = [];
+
       for (var idx = 0; idx < rotationDegOfFreedom; idx++) {
-        harmonyDegrees.push(rv.rotationangles[idx].value);
-        melodyDegrees.push(hrv.rotationangles[idx].value);
+        melodyDegrees.push(rv.rotationangles[idx].value);
+        if (hrv.harmonyenabled) {
+          harmonyDegrees.push(hrv.rotationangles[idx].value);
+        }
       }
-      harmonyDegreesStr = harmonyDegrees.join(",");
-      melodyDegreesStr = melodyDegrees.join(",");
+
+      var melodyDegreesStr = melodyDegrees.join(",");
+      var harmonyDegreesStr = "";
+      if (hrv.harmonyenabled) {
+        harmonyDegreesStr = harmonyDegrees.join(",");
+      }
 
       var vobj = this;
       axios.get(quantum_music_host +
           "/toy_piano_counterpoint?pitch_index=" + this.initial_pitch_idx + "&species=" + species_arg +
-          "&melodic_degrees=" + harmonyDegreesStr +
-          "&harmonic_degrees=" + melodyDegreesStr +
+          "&melodic_degrees=" + melodyDegreesStr +
+          "&harmonic_degrees=" + harmonyDegreesStr +
           "&use_simulator=" + this.usesimulator)
           .then(function (response) {
             vobj.load_notes_from_response(response);
+            vobj.hasJamNotes = true;
           })
           .catch(function (error) {
             console.log(error);
@@ -212,11 +343,398 @@ var vm = Vue.component('piano-component', {
 
     load_notes_from_response: function(resp) {
       console.log(resp)
-      alert(resp.data.lilypond)
-      this.notes = resp.data.toy_piano;
-      //this.startplay();
-    }
 
+      if (rv.bellState) {
+        if (hrv.bellState || !hrv.harmonyenabled) {
+          for (var idx in resp.data.toy_piano) {
+            resp.data.toy_piano[idx].num += (bellInstrument * instrumentsOffset);
+          }
+        }
+      }
+
+      this.notes = resp.data.toy_piano;
+      this.measurementsOriginal = resp.data.full_res_dict;
+      this.measurements = $.extend(true, {}, this.measurementsOriginal);
+      alert(resp.data.lilypond)
+    },
+
+    /*
+       Jam with the QC.
+       userPhraseBeats is number of beats out of 8 that the user will play in each phrase
+     */
+    jam: function(userPhraseBeatsArg) {
+      var userPhraseBeats = userPhraseBeatsArg;
+      this.harmonyOnlyMode = false;
+
+      // Test if user wants harmony-only mode
+      if (userPhraseBeats == 10) {
+        userPhraseBeats = 1;
+        this.harmonyOnlyMode = true;
+      }
+
+      this.measurements = $.extend(true, {}, this.measurementsOriginal);
+      this.numNoteOnEvents = 0;
+
+      this.jamming = false;
+
+      // Variable for total number of beats in shared phrase between user and QC
+      var numBeatsInSharedPhrase = userPhraseBeats >= 4 ? 8 : userPhraseBeats * 2;
+
+      this.numBeatsUserPlaysInPhrase = userPhraseBeats;
+
+      this.numBeatsQcPlaysInPhrase = numBeatsInSharedPhrase - userPhraseBeats;
+
+      this.quarterNoteDurationMax = 250;
+      this.quarterNoteDurationDefault = 150;
+
+      // Constant quarter note duration factor
+      this.quarterNoteDurationFactor = 0.25;
+
+      this.notes = [];
+      this.stopplay();
+      this.startplay();
+    },
+
+    enableJamming: function() {
+      var jobj = this;
+      WebMidi.enable(function (err) {
+
+        if (err) {
+          alert("WebMidi could not be enabled");
+        }
+        else {
+          console.log("WebMidi enabled!");
+          console.log(WebMidi.inputs);
+          midiInput = WebMidi.inputs[0];
+
+          midiInput.addListener('noteon', "all",
+            function (e) {
+              if (jobj.numNoteOnEvents % jobj.numBeatsUserPlaysInPhrase == 0) {
+                jobj.phraseStartTime = Date.now();
+              }
+
+              jobj.numNoteOnEvents++;
+              var noteName = e.note.name;
+              var noteOctave = e.note.octave;
+              var noteNameOctave = noteName + noteOctave;
+              var noteMidiNumber = WebMidi.noteNameToNumber(noteNameOctave);
+              console.log("Received 'noteon' message (" + noteNameOctave + ", " + jobj.numNoteOnEvents + ").");
+
+              var toyPianoPitchNum = jobj.noteToToyPianoPitch(noteNameOctave, userInstrument);
+              console.log("toyPianoPitchNum: " + toyPianoPitchNum);
+
+              if (!jobj.playing()) {
+                jobj.addnote(toyPianoPitchNum);
+                return;
+              }
+              else if (!jobj.jamming) {
+                jobj.addnotedelayed(toyPianoPitchNum, 0);
+              }
+              else {
+                // if user played a note while QC was jamming, play the note but don't respond
+                jobj.playnote(toyPianoPitchNum, 1);
+                jobj.numNoteOnEvents--;
+                return;
+              }
+
+
+              if (jobj.numNoteOnEvents % jobj.numBeatsUserPlaysInPhrase == 0) {
+                jobj.phraseEndTime = Date.now();
+                if (jobj.numBeatsUserPlaysInPhrase == 1) {
+                  jobj.quarterNoteDuration = jobj.quarterNoteDurationDefault;
+                }
+                else {
+                  jobj.quarterNoteDuration = ((jobj.phraseEndTime - jobj.phraseStartTime) /
+                    (jobj.numBeatsUserPlaysInPhrase - 1) * jobj.quarterNoteDurationFactor) | 0;
+                  jobj.quarterNoteDuration = Math.min(jobj.quarterNoteDuration, jobj.quarterNoteDurationMax);
+                }
+
+                jobj.jamming = true;
+
+                var basisState = jobj.noteToBasisState(noteName, noteOctave);
+
+
+                if (hrv.harmonyenabled) {
+                  if (jobj.numBeatsUserPlaysInPhrase == 5 || jobj.harmonyOnlyMode) {
+                    // Play harmony on the user's down beat
+                    // Get harmony note for note that user played
+                    var measHarmonyBasisState = jobj.popMeas(basisState, true);
+                    console.log('popMeas harmony for' + measHarmonyBasisState + ": " + measHarmonyBasisState);
+
+                    var harmonyNoteNameOctave = jobj.basisStateToNote(measHarmonyBasisState, noteOctave + 1);
+
+                    var harmonyToyPianoPitchNum =
+                      jobj.noteToToyPianoPitch(harmonyNoteNameOctave, jobj.getQcInstrument());
+                    console.log('harmonyToyPianoPitchNum: ' + harmonyToyPianoPitchNum);
+
+                    jobj.addnotedelayed(harmonyToyPianoPitchNum, 0);
+                  }
+                }
+
+                if (jobj.harmonyOnlyMode) return;
+
+                // Get melody note to follow note that user played
+                var measMelodyBasisState = jobj.popMeas(basisState, false);
+                console.log('popMeas melody1 for' + basisState + ": " + measMelodyBasisState);
+
+                var melodyNoteNameOctave = jobj.basisStateToNote(measMelodyBasisState, noteOctave);
+
+                var melodyToyPianoPitchNum =
+                    jobj.noteToToyPianoPitch(melodyNoteNameOctave, jobj.getQcInstrument());
+                console.log('melodyToyPianoPitchNum 1: ' + melodyToyPianoPitchNum);
+
+                jobj.addnotedelayed(melodyToyPianoPitchNum, jobj.quarterNoteDuration);
+
+
+                if (hrv.harmonyenabled) {
+                  if (jobj.numBeatsUserPlaysInPhrase != 5) {
+                    // Play harmony on the QC down beat
+                    // Get harmony note for melody note
+                    var measHarmonyBasisState = jobj.popMeas(measMelodyBasisState, true);
+                    console.log('popMeas harmony for' + measHarmonyBasisState + ": " + measHarmonyBasisState);
+
+                    var harmonyNoteNameOctave = jobj.basisStateToNote(measHarmonyBasisState, noteOctave + 1);
+
+                    var harmonyToyPianoPitchNum =
+                      jobj.noteToToyPianoPitch(harmonyNoteNameOctave, jobj.getQcInstrument());
+                    console.log('harmonyToyPianoPitchNum: ' + harmonyToyPianoPitchNum);
+
+                    jobj.addnotedelayed(harmonyToyPianoPitchNum, 0);
+                  }
+                }
+
+                // TODO: Refactor following blocks into a loop
+                if (jobj.numBeatsQcPlaysInPhrase >= 2) {
+                    // Get 2nd melody note to follow 1st melody note
+                    measMelodyBasisState = jobj.popMeas(measMelodyBasisState, false);
+                    console.log('popMeas melody2 for' + measMelodyBasisState + ": " + measMelodyBasisState);
+
+                    melodyNoteNameOctave = jobj.basisStateToNote(measMelodyBasisState, noteOctave);
+
+                    melodyToyPianoPitchNum =
+                        jobj.noteToToyPianoPitch(melodyNoteNameOctave, jobj.getQcInstrument());
+                    console.log('melodyToyPianoPitchNum 2: ' + melodyToyPianoPitchNum);
+
+                    jobj.addnotedelayed(melodyToyPianoPitchNum, jobj.quarterNoteDuration * 2);
+                }
+
+
+                if (jobj.numBeatsQcPlaysInPhrase >= 3) {
+                    // Get 3rd melody note to follow 2st melody note
+                    measMelodyBasisState = jobj.popMeas(measMelodyBasisState, false);
+                    console.log('popMeas melody2 for' + measMelodyBasisState + ": " + measMelodyBasisState);
+
+                    melodyNoteNameOctave = jobj.basisStateToNote(measMelodyBasisState, noteOctave);
+
+                    melodyToyPianoPitchNum =
+                        jobj.noteToToyPianoPitch(melodyNoteNameOctave, jobj.getQcInstrument());
+                    console.log('melodyToyPianoPitchNum 2: ' + melodyToyPianoPitchNum);
+
+                    jobj.addnotedelayed(melodyToyPianoPitchNum, jobj.quarterNoteDuration * 3);
+                }
+
+                if (jobj.numBeatsQcPlaysInPhrase >= 4) {
+                  // Get 4th melody note to follow 3rd melody note
+                  measMelodyBasisState = jobj.popMeas(measMelodyBasisState, false);
+                  console.log('popMeas melody3 for' + measMelodyBasisState + ": " + measMelodyBasisState);
+
+                  melodyNoteNameOctave = jobj.basisStateToNote(measMelodyBasisState, noteOctave);
+
+                  melodyToyPianoPitchNum =
+                      jobj.noteToToyPianoPitch(melodyNoteNameOctave, jobj.getQcInstrument());
+                  console.log('melodyToyPianoPitchNum 3: ' + melodyToyPianoPitchNum);
+
+                  jobj.addnotedelayed(melodyToyPianoPitchNum, jobj.quarterNoteDuration * 4);
+                }
+
+              }
+            }
+          );
+
+          midiInput.addListener('noteoff', "all",
+            function (e) {
+              var noteName = e.note.name;
+              var noteOctave = e.note.octave;
+              var noteNameOctave = noteName + noteOctave;
+              var noteMidiNumber = WebMidi.noteNameToNumber(noteNameOctave);
+              //console.log("Received 'noteoff' message (" + noteNameOctave + ").");
+            }
+          );
+
+        }
+      });
+    },
+
+    /*
+       Inputs: Note name (e.g. "C") and octave (e.g. 4)
+       Returns: Basis state (e.g. "000") for note and octave
+     */
+    noteToBasisState: function(name, octave) {
+      var basisState;
+      var naturalNoteName = name.substring(0, 1);
+      if (naturalNoteName === "C") {
+        if (octave >= 4) {
+          basisState = "000";
+        }
+        else {
+          basisState = "111";
+        }
+      }
+      else if (naturalNoteName === "D") {
+        basisState = "001";
+      }
+      else if (naturalNoteName === "E") {
+        basisState = "010";
+      }
+      else if (naturalNoteName === "F") {
+        basisState = "011";
+      }
+      else if (naturalNoteName === "G") {
+        basisState = "100";
+      }
+      else if (naturalNoteName === "A") {
+        basisState = "101";
+      }
+      else if (naturalNoteName === "B") {
+        basisState = "110";
+      }
+      return basisState;
+    },
+
+    /*
+       Inputs: Basis state (e.g. "000") and octave (e.g. 3)
+       Returns: Note name (e.g. "C3") corresponding to basis state and octave.
+                For example, when "000" and 3 are input, output is C3, but
+                when "111" and 3 are input, "C4" is output.
+     */
+    basisStateToNote: function(basisState, octave) {
+      var noteName;
+      var octaveNum = octave;
+      if (basisState === "000") {
+        noteName = "C";
+      }
+      else if (basisState === "001") {
+        noteName = "D";
+      }
+      else if (basisState === "010") {
+        noteName = "E";
+      }
+      else if (basisState === "011") {
+        noteName = "F";
+      }
+      else if (basisState === "100") {
+        noteName = "G";
+      }
+      else if (basisState === "101") {
+        noteName = "A";
+      }
+      else if (basisState === "110") {
+        noteName = "B";
+      }
+      else if (basisState === "111") {
+        noteName = "C";
+        octaveNum++;
+      }
+      return noteName + octaveNum;
+    },
+
+    /*
+       Inputs: Note name including octave (e.g. "C4")
+       Returns: Toy piano pitch for note and octave
+     */
+    noteToToyPianoPitch: function(nameOctave, instrumentIndex) {
+      //var noteMidiNumber = WebMidi.noteNameToNumber(name + octave);
+      var toyPianoNoteOffset = 0;
+      var toyPianoNoteNum = 0;
+      var naturalName = nameOctave.slice(0, 1)
+      var sharp = nameOctave.length == 3 && nameOctave.slice(1, 2) === "#";
+      var octave = +(nameOctave.slice(-1));
+      if (octave <= 2) {
+        toyPianoNoteOffset = 0;
+      }
+      else if (octave == 3) {
+        toyPianoNoteOffset = 7;
+      }
+      else if (octave == 4) {
+        toyPianoNoteOffset = 14;
+      }
+      else if (octave == 5) {
+        toyPianoNoteOffset = 21;
+      }
+      else if (octave >= 6) {
+        if (naturalName === "C") {
+          toyPianoNoteOffset = 28;
+        }
+        else {
+          toyPianoNoteOffset = 21;
+        }
+      }
+
+      if (naturalName === "C") {
+        toyPianoNoteNum = 1;
+      }
+      else if (naturalName === "D") {
+        toyPianoNoteNum = 2;
+      }
+      else if (naturalName === "E") {
+        toyPianoNoteNum = 3;
+      }
+      else if (naturalName === "F") {
+        toyPianoNoteNum = 4;
+      }
+      else if (naturalName === "G") {
+        toyPianoNoteNum = 5;
+      }
+      else if (naturalName === "A") {
+        toyPianoNoteNum = 6;
+      }
+      else if (naturalName === "B") {
+        toyPianoNoteNum = 7;
+      }
+
+      toyPianoNoteNum +=  + toyPianoNoteOffset;
+      if (sharp) {
+        toyPianoNoteNum += 0.5
+      }
+
+      return instrumentIndex * instrumentsOffset  + toyPianoNoteNum;
+    },
+
+    getQcInstrument: function() {
+      var instrument = qcInstrument;
+      if (rv.bellState) {
+        if (hrv.bellState || !hrv.harmonyenabled) {
+          instrument = bellInstrument;
+        }
+      }
+      else if (hrv.bellState && this.harmonyOnlyMode) {
+        instrument = bellInstrument;
+      }
+      return instrument;
+    },
+
+    popMeas: function(basisState, harmony) {
+      // key is "000_m" or "000_h" where 000 is a binary number
+      var key = basisState;
+      if (!!harmony) {
+        key += "_h";
+      }
+      else {
+        key += "_m";
+      }
+
+      var poppedVal = this.measurements[key].shift();
+      if (poppedVal == undefined) {
+        console.log("No more measurements for: " + key)
+        poppedVal = "111";
+      }
+      return poppedVal;
+    }
+  },
+  beforeMount() {
+    console.log("In beforeMount");
+    this.enableJamming();
   }
+
 });
 
