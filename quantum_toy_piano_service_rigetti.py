@@ -166,7 +166,6 @@ def toy_piano_counterpoint():
 
         num_runs = 1
         if species == 0:
-            print ("hrllo")
             circuit_dict = {}  # Key is circuit name, value is circuit
 
             res_dict = dict()
@@ -203,7 +202,6 @@ def toy_piano_counterpoint():
 
                     res_dict_key = qubit_string + "_m"
 
-                    # print('res_dict_key: ', res_dict_key)
                     for idx, qubit_char in enumerate(qubit_string):
                         if qubit_char == '0':
                             p.inst(I(NUM_CIRCUIT_WIRES - 1 - idx))
@@ -221,10 +219,7 @@ def toy_piano_counterpoint():
                     for bit_idx in range(0, NUM_CIRCUIT_WIRES):
                         meas_bitstr += str(bits[bit_idx])
 
-                    # print("meas_bitstr: ", meas_bitstr)
-
-                    measured_pitch = bits[0] * 4 + bits[1] * 2 + bits[2]
-                    # print("measured_pitch: ", measured_pitch)
+                    print(res_dict_key + ':' + meas_bitstr)
 
                     res_dict[res_dict_key].append(meas_bitstr)
 
@@ -239,7 +234,6 @@ def toy_piano_counterpoint():
 
                         res_dict_key = qubit_string + "_h"
 
-                        # print('res_dict_key: ', res_dict_key)
                         for idx, qubit_char in enumerate(qubit_string):
                             if qubit_char == '0':
                                 p.inst(I(NUM_CIRCUIT_WIRES - 1 - idx))
@@ -257,10 +251,7 @@ def toy_piano_counterpoint():
                         for bit_idx in range(0, NUM_CIRCUIT_WIRES):
                             meas_bitstr += str(bits[bit_idx])
 
-                        # print("meas_bitstr: ", meas_bitstr)
-
-                        measured_pitch = bits[0] * 4 + bits[1] * 2 + bits[2]
-                        # print("measured_pitch: ", measured_pitch)
+                        print(res_dict_key + ':' + meas_bitstr)
 
                         res_dict[res_dict_key].append(meas_bitstr)
 
