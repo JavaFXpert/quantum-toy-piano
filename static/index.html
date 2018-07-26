@@ -45,7 +45,8 @@
 
   <script src="scripts/axios.min.js"></script>
 
-  <script src="main.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/webmidi"></script>
+
   <script src="piano.js"></script>
   <script src="stochastic-matrix.js"></script>
   <script src="unistochastic-matrix.js"></script>
@@ -135,7 +136,7 @@
               </v-container>
             </v-tab-item>
 
-            <v-tab>Performance</v-tab>
+            <v-tab>Jam On!</v-tab>
             <v-tab-item>
               <v-container fluid>
                 <div id="piano">
@@ -143,6 +144,7 @@
                 </div>
               </v-container>
             </v-tab-item>
+
           </v-tabs>
         </v-content>
       </main>
@@ -164,31 +166,21 @@
         rightDrawer: false,
         title: 'Quantum Music',
         gridNumRowsCols: 4,
-        gridRowNames: ["C", "D", "E", "F"],
-        gridColNames: ["C", "D", "E", "F"],
+        gridRowNames: ["Cg 00", "Da 01", "Eb 10", "Fc 11"],
+        gridColNames: ["Cg 00", "Da 01", "Eb 10", "Fc 11"],
         desiredMelodyMatrix: math.matrix(
 //            C4   D4   E4   F4
-          [ [.10, .70, .00, .20],   //C4
-            [.50, .00, .30, .20],   //D4
-            [.30, .30, .00, .40],   //E4
-            [.10, .00, .70, .20]]), //F4
-
-          // [ [.00, 1.0, .00, .00],   //C4
-          //   [.00, .00, 1.0, .00],   //D4
-          //   [.00, .00, .00, 1.0],   //E4
-          //   [1.0, .00, .00, .00]]), //F4
+          [ [1.0, .00, .00, .00],   //C4
+            [.00, 1.0, .00, .00],   //D4
+            [.00, .00, 1.0, .00],   //E4
+            [.00, .00, .00, 1.0]]), //F4
 
         desiredHarmonyMatrix: math.matrix(
 //            C4   D4   E4   F4
-//           [ [.10, .10, .70, .10],   //C4
-//             [.10, .10, .10, .70],   //D4
-//             [.70, .10, .10, .10],   //E4
-//             [.10, .70, .10, .10]]), //F4
-
-          [ [.00, .00, 1.0, .00],   //C4
-            [.00, .00, .00, 1.0],   //D4
-            [1.0, .00, .00, .00],   //E4
-            [.00, 1.0, .00, .00]]), //F4
+          [ [1.0, .00, .00, .00],   //C4
+            [.00, 1.0, .00, .00],   //D4
+            [.00, .00, 1.0, .00],   //E4
+            [.00, .00, .00, 1.0]]), //F4
       }
     })
   </script>
