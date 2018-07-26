@@ -17,6 +17,7 @@ from flask import Flask, jsonify, request
 from flask_cors import CORS
 from pyquil.quil import Program
 from pyquil.quilbase import RawInstr, Pragma
+from collections import deque
 import pyquil.api as api
 from pyquil.gates import *
 from math import *
@@ -79,7 +80,7 @@ def toy_piano_counterpoint():
         pitch_index = 0
 
     species = int(request.args['species'])
-    #print("species: ", species)
+    print("species: ", species)
 
     melodic_degrees = request.args['melodic_degrees'].split(",")
     print("melodic_degrees: ", melodic_degrees)
@@ -100,6 +101,10 @@ def toy_piano_counterpoint():
     quantum_device = None
     q_con = None
 
+    melody_note_nums = []
+    harmony_note_nums = []
+    ret_dict = {}
+
     if use_simulator:
         q_con = api.QVMConnection()
     else:
@@ -118,7 +123,7 @@ def toy_piano_counterpoint():
 
     if (len(melodic_degrees) == DEGREES_OF_FREEDOM and
             (len(harmonic_degrees) == DEGREES_OF_FREEDOM or not harmonyenabled) and
-            1 <= species <= 3 and
+            0 <= species <= 3 and
             0 <= pitch_index < NUM_PITCHES):
 
         #TODO: Move/change this
@@ -159,92 +164,136 @@ def toy_piano_counterpoint():
             print("rot_harmonic_circuit:")
             print(rot_harmonic_circuit)
 
-        harmony_notes_factor = 2**(species - 1) * (1 if harmonyenabled else 0)  # Number of harmony notes for each melody note
-        num_composition_bits = TOTAL_MELODY_NOTES * (harmony_notes_factor + 1) * NUM_CIRCUIT_WIRES
-
-        composition_bits = [0] * num_composition_bits
-
-        # Convert the pitch index to a binary string, and place into the
-        # composition_bits array, least significant bits in lowest elements of array
-        qubit_string = format(pitch_index, '03b')
-        for idx, qubit_char in enumerate(qubit_string):
-            if qubit_char == '0':
-                composition_bits[idx] = 0
-            else:
-                composition_bits[idx] = 1
-
         num_runs = 1
+        if species == 0:
+            print ("hrllo")
+            circuit_dict = {}  # Key is circuit name, value is circuit
 
-        # Compute notes for the main melody
-        for melody_note_idx in range(0, TOTAL_MELODY_NOTES):
-            #
-            if (melody_note_idx < TOTAL_MELODY_NOTES - 1):
-                p = Program()
+            res_dict = dict()
+            res_dict['000_m'] = deque([])
+            res_dict['000_h'] = deque([])
+            res_dict['001_m'] = deque([])
+            res_dict['001_h'] = deque([])
+            res_dict['010_m'] = deque([])
+            res_dict['010_h'] = deque([])
+            res_dict['011_m'] = deque([])
+            res_dict['011_h'] = deque([])
 
-                for bit_idx in range(0, NUM_CIRCUIT_WIRES):
-                    if (composition_bits[melody_note_idx * NUM_CIRCUIT_WIRES + bit_idx] == 0):
-                        p.inst(I(NUM_CIRCUIT_WIRES - 1 - bit_idx))
-                    else:
-                        p.inst(X(NUM_CIRCUIT_WIRES - 1 - bit_idx))
+            res_dict['100_m'] = deque([])
+            res_dict['100_h'] = deque([])
+            res_dict['101_m'] = deque([])
+            res_dict['101_h'] = deque([])
+            res_dict['110_m'] = deque([])
+            res_dict['110_h'] = deque([])
+            res_dict['111_m'] = deque([])
+            res_dict['111_h'] = deque([])
 
-                p.inst(copy.deepcopy(rot_melodic_circuit))
-                p.inst().measure(0, 0).measure(1, 1) \
-                    .measure(2, 2)
-                # print("rot_melodic_circuit:")
-                # print(p)
+            # Create all of the potentially required melody circuits
+            num_required_melodic_circuits_per_pitch = 10
 
-                result = q_con.run(p, [2, 1, 0], num_runs)
-                bits = result[0]
-                for bit_idx in range(0, NUM_CIRCUIT_WIRES):
-                    composition_bits[(melody_note_idx + 1) * NUM_CIRCUIT_WIRES + bit_idx] = bits[bit_idx]
+            num_required_harmonic_circuits_per_pitch = 5 if harmonyenabled else 0
 
-                #print(composition_bits)
+            for pitch_idx in range(0, DIATONIC_SCALE_OCTAVE_PITCHES):
+                for melodic_circuit_idx in range(0, num_required_melodic_circuits_per_pitch):
 
-                measured_pitch = bits[0] * 4 + bits[1] * 2 + bits[2]
-                #print("melody melody_note_idx measured_pitch")
-                #print(melody_note_idx)
-                #print(measured_pitch)
+                    p = Program()
+
+                    # Convert the pitch index to a binary string
+                    qubit_string = format(pitch_idx, '03b')
+
+                    res_dict_key = qubit_string + "_m"
+
+                    # print('res_dict_key: ', res_dict_key)
+                    for idx, qubit_char in enumerate(qubit_string):
+                        if qubit_char == '0':
+                            p.inst(I(NUM_CIRCUIT_WIRES - 1 - idx))
+                        else:
+                            p.inst(X(NUM_CIRCUIT_WIRES - 1 - idx))
+
+                    p.inst(copy.deepcopy(rot_melodic_circuit))
+                    p.inst().measure(0, 0).measure(1, 1) \
+                        .measure(2, 2)
+                    # print("rot_melodic_circuit: ", p)
+
+                    result = q_con.run(p, [2, 1, 0], num_runs)
+                    bits = result[0]
+                    meas_bitstr = ""
+                    for bit_idx in range(0, NUM_CIRCUIT_WIRES):
+                        meas_bitstr += str(bits[bit_idx])
+
+                    # print("meas_bitstr: ", meas_bitstr)
+
+                    measured_pitch = bits[0] * 4 + bits[1] * 2 + bits[2]
+                    # print("measured_pitch: ", measured_pitch)
+
+                    res_dict[res_dict_key].append(meas_bitstr)
 
             if harmonyenabled:
-                # Now compute a harmony note for the melody note
-                #print("Now compute a harmony note for the melody notev")
-                p = Program()
+                for pitch_idx in range(0, DIATONIC_SCALE_OCTAVE_PITCHES):
+                    for harmonic_circuit_idx in range(0, num_required_harmonic_circuits_per_pitch):
 
-                for bit_idx in range(0, NUM_CIRCUIT_WIRES):
-                    if composition_bits[melody_note_idx * NUM_CIRCUIT_WIRES + bit_idx] == 0:
-                        p.inst(I(NUM_CIRCUIT_WIRES - 1 - bit_idx))
-                    else:
-                        p.inst(X(NUM_CIRCUIT_WIRES - 1 - bit_idx))
+                        p = Program()
 
-                p.inst(copy.deepcopy(rot_harmonic_circuit))
-                p.inst().measure(0, 0).measure(1, 1) \
-                    .measure(2, 2)
-                # print("rot_harmonic_circuit:")
-                # print(p)
+                        # Convert the pitch index to a binary string
+                        qubit_string = format(pitch_idx, '03b')
 
-                result = q_con.run(p, [2, 1, 0], num_runs)
-                bits = result[0]
-                for bit_idx in range(0, NUM_CIRCUIT_WIRES):
-                    composition_bits[(melody_note_idx * NUM_CIRCUIT_WIRES * harmony_notes_factor) +
-                                     (TOTAL_MELODY_NOTES * NUM_CIRCUIT_WIRES) + bit_idx] = bits[bit_idx]
+                        res_dict_key = qubit_string + "_h"
 
-                #print(composition_bits)
+                        # print('res_dict_key: ', res_dict_key)
+                        for idx, qubit_char in enumerate(qubit_string):
+                            if qubit_char == '0':
+                                p.inst(I(NUM_CIRCUIT_WIRES - 1 - idx))
+                            else:
+                                p.inst(X(NUM_CIRCUIT_WIRES - 1 - idx))
 
-                measured_pitch = bits[0] * 4 + bits[1] * 2 + bits[2]
-                #print("harmony melody_note_idx measured_pitch")
-                #print(melody_note_idx)
-                #print(measured_pitch)
+                        p.inst(copy.deepcopy(rot_harmonic_circuit))
+                        p.inst().measure(0, 0).measure(1, 1) \
+                            .measure(2, 2)
+                        # print("rot_harmonic_circuit: ", p)
 
+                        result = q_con.run(p, [2, 1, 0], num_runs)
+                        bits = result[0]
+                        meas_bitstr = ""
+                        for bit_idx in range(0, NUM_CIRCUIT_WIRES):
+                            meas_bitstr += str(bits[bit_idx])
 
-                # Now compute melody notes to follow the harmony note
-                #print("Now compute melody notes to follow the harmony note")
-                for harmony_note_idx in range(1, harmony_notes_factor):
+                        # print("meas_bitstr: ", meas_bitstr)
+
+                        measured_pitch = bits[0] * 4 + bits[1] * 2 + bits[2]
+                        # print("measured_pitch: ", measured_pitch)
+
+                        res_dict[res_dict_key].append(meas_bitstr)
+
+            print('res_dict: ', res_dict)
+
+            full_res_dict = dict()
+            for key in res_dict:
+                full_res_dict[key] = list(res_dict[key])
+            ret_dict = {"full_res_dict": full_res_dict}
+
+        else:
+            harmony_notes_factor = 2**(species - 1) * (1 if harmonyenabled else 0)  # Number of harmony notes for each melody note
+            num_composition_bits = TOTAL_MELODY_NOTES * (harmony_notes_factor + 1) * NUM_CIRCUIT_WIRES
+
+            composition_bits = [0] * num_composition_bits
+
+            # Convert the pitch index to a binary string, and place into the
+            # composition_bits array, least significant bits in lowest elements of array
+            qubit_string = format(pitch_index, '03b')
+            for idx, qubit_char in enumerate(qubit_string):
+                if qubit_char == '0':
+                    composition_bits[idx] = 0
+                else:
+                    composition_bits[idx] = 1
+
+            # Compute notes for the main melody
+            for melody_note_idx in range(0, TOTAL_MELODY_NOTES):
+                #
+                if (melody_note_idx < TOTAL_MELODY_NOTES - 1):
                     p = Program()
 
                     for bit_idx in range(0, NUM_CIRCUIT_WIRES):
-                        if (composition_bits[(melody_note_idx * NUM_CIRCUIT_WIRES * harmony_notes_factor) +
-                                             ((harmony_note_idx - 1) * NUM_CIRCUIT_WIRES) +
-                                             (TOTAL_MELODY_NOTES * NUM_CIRCUIT_WIRES) + bit_idx] == 0):
+                        if (composition_bits[melody_note_idx * NUM_CIRCUIT_WIRES + bit_idx] == 0):
                             p.inst(I(NUM_CIRCUIT_WIRES - 1 - bit_idx))
                         else:
                             p.inst(X(NUM_CIRCUIT_WIRES - 1 - bit_idx))
@@ -252,36 +301,98 @@ def toy_piano_counterpoint():
                     p.inst(copy.deepcopy(rot_melodic_circuit))
                     p.inst().measure(0, 0).measure(1, 1) \
                         .measure(2, 2)
-                    #print("rot_melodic_circuit:")
-                    #print(p)
+                    # print("rot_melodic_circuit:")
+                    # print(p)
+
+                    result = q_con.run(p, [2, 1, 0], num_runs)
+                    bits = result[0]
+                    for bit_idx in range(0, NUM_CIRCUIT_WIRES):
+                        composition_bits[(melody_note_idx + 1) * NUM_CIRCUIT_WIRES + bit_idx] = bits[bit_idx]
+
+                    #print(composition_bits)
+
+                    measured_pitch = bits[0] * 4 + bits[1] * 2 + bits[2]
+                    #print("melody melody_note_idx measured_pitch")
+                    #print(melody_note_idx)
+                    #print(measured_pitch)
+
+                if harmonyenabled:
+                    # Now compute a harmony note for the melody note
+                    #print("Now compute a harmony note for the melody notev")
+                    p = Program()
+
+                    for bit_idx in range(0, NUM_CIRCUIT_WIRES):
+                        if composition_bits[melody_note_idx * NUM_CIRCUIT_WIRES + bit_idx] == 0:
+                            p.inst(I(NUM_CIRCUIT_WIRES - 1 - bit_idx))
+                        else:
+                            p.inst(X(NUM_CIRCUIT_WIRES - 1 - bit_idx))
+
+                    p.inst(copy.deepcopy(rot_harmonic_circuit))
+                    p.inst().measure(0, 0).measure(1, 1) \
+                        .measure(2, 2)
+                    # print("rot_harmonic_circuit:")
+                    # print(p)
 
                     result = q_con.run(p, [2, 1, 0], num_runs)
                     bits = result[0]
                     for bit_idx in range(0, NUM_CIRCUIT_WIRES):
                         composition_bits[(melody_note_idx * NUM_CIRCUIT_WIRES * harmony_notes_factor) +
-                                          ((harmony_note_idx) * NUM_CIRCUIT_WIRES) +
                                          (TOTAL_MELODY_NOTES * NUM_CIRCUIT_WIRES) + bit_idx] = bits[bit_idx]
 
                     #print(composition_bits)
 
                     measured_pitch = bits[0] * 4 + bits[1] * 2 + bits[2]
-                    #print("melody after harmony melody_note_idx measured_pitch")
+                    #print("harmony melody_note_idx measured_pitch")
                     #print(melody_note_idx)
                     #print(measured_pitch)
 
-        all_note_nums = create_note_nums_array(composition_bits)
-        melody_note_nums = all_note_nums[0:TOTAL_MELODY_NOTES]
-        harmony_note_nums = all_note_nums[7:num_composition_bits]
 
-    if use_simulator:
-        composer = "Rigetti QVM"
-    else:
-        composer = "Rigetti " + "8Q-Agave"
+                    # Now compute melody notes to follow the harmony note
+                    #print("Now compute melody notes to follow the harmony note")
+                    for harmony_note_idx in range(1, harmony_notes_factor):
+                        p = Program()
 
-    ret_dict = {"melody": melody_note_nums,
-                "harmony": harmony_note_nums,
-                "lilypond": create_lilypond(melody_note_nums, harmony_note_nums, composer),
-                "toy_piano" : create_toy_piano(melody_note_nums, harmony_note_nums)}
+                        for bit_idx in range(0, NUM_CIRCUIT_WIRES):
+                            if (composition_bits[(melody_note_idx * NUM_CIRCUIT_WIRES * harmony_notes_factor) +
+                                                 ((harmony_note_idx - 1) * NUM_CIRCUIT_WIRES) +
+                                                 (TOTAL_MELODY_NOTES * NUM_CIRCUIT_WIRES) + bit_idx] == 0):
+                                p.inst(I(NUM_CIRCUIT_WIRES - 1 - bit_idx))
+                            else:
+                                p.inst(X(NUM_CIRCUIT_WIRES - 1 - bit_idx))
+
+                        p.inst(copy.deepcopy(rot_melodic_circuit))
+                        p.inst().measure(0, 0).measure(1, 1) \
+                            .measure(2, 2)
+                        #print("rot_melodic_circuit:")
+                        #print(p)
+
+                        result = q_con.run(p, [2, 1, 0], num_runs)
+                        bits = result[0]
+                        for bit_idx in range(0, NUM_CIRCUIT_WIRES):
+                            composition_bits[(melody_note_idx * NUM_CIRCUIT_WIRES * harmony_notes_factor) +
+                                              ((harmony_note_idx) * NUM_CIRCUIT_WIRES) +
+                                             (TOTAL_MELODY_NOTES * NUM_CIRCUIT_WIRES) + bit_idx] = bits[bit_idx]
+
+                        #print(composition_bits)
+
+                        measured_pitch = bits[0] * 4 + bits[1] * 2 + bits[2]
+                        #print("melody after harmony melody_note_idx measured_pitch")
+                        #print(melody_note_idx)
+                        #print(measured_pitch)
+
+            all_note_nums = create_note_nums_array(composition_bits)
+            melody_note_nums = all_note_nums[0:TOTAL_MELODY_NOTES]
+            harmony_note_nums = all_note_nums[7:num_composition_bits]
+
+            if use_simulator:
+                composer = "Rigetti QVM"
+            else:
+                composer = "Rigetti " + "8Q-Agave"
+
+            ret_dict = {"melody": melody_note_nums,
+                        "harmony": harmony_note_nums,
+                        "lilypond": create_lilypond(melody_note_nums, harmony_note_nums, composer),
+                        "toy_piano" : create_toy_piano(melody_note_nums, harmony_note_nums)}
 
     return jsonify(ret_dict)
 
