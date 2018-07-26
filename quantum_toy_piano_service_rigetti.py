@@ -82,10 +82,16 @@ def toy_piano_counterpoint():
     #print("species: ", species)
 
     melodic_degrees = request.args['melodic_degrees'].split(",")
-    #print("melodic_degrees: ", melodic_degrees)
+    print("melodic_degrees: ", melodic_degrees)
 
-    harmonic_degrees = request.args['harmonic_degrees'].split(",")
-    #print("harmonic_degrees: ", harmonic_degrees)
+    harmonyenabled = True
+    harmonic_degrees = []
+    harmonic_degrees_str = request.args['harmonic_degrees']
+    if len(harmonic_degrees_str) > 0:
+        harmonic_degrees = harmonic_degrees_str.split(",")
+    else:
+        harmonyenabled = False
+    print("harmonic_degrees: ", harmonic_degrees)
 
     use_simulator = request.args['use_simulator'].lower() == "true"
     print("use_simulator: ", use_simulator)
@@ -111,7 +117,7 @@ def toy_piano_counterpoint():
             q_con = api.QVMConnection()
 
     if (len(melodic_degrees) == DEGREES_OF_FREEDOM and
-            len(harmonic_degrees) == DEGREES_OF_FREEDOM and
+            (len(harmonic_degrees) == DEGREES_OF_FREEDOM or not harmonyenabled) and
             1 <= species <= 3 and
             0 <= pitch_index < NUM_PITCHES):
 
@@ -134,25 +140,26 @@ def toy_piano_counterpoint():
         print("rot_melodic_circuit:")
         print(rot_melodic_circuit)
 
-        rot_harmonic_circuit = compute_circuit(harmonic_degrees)
+        if harmonyenabled:
+            rot_harmonic_circuit = compute_circuit(harmonic_degrees)
 
-        if not use_simulator:
-            # TODO: Put back in
-            # rot_harmonic_circuit = compiler.compile(rot_harmonic_circuit)
+            if not use_simulator:
+                # TODO: Put back in
+                # rot_harmonic_circuit = compiler.compile(rot_harmonic_circuit)
 
-            # TODO: Remove these lines
-            tmp_rot_harmonic_circuit = compiler.compile(rot_harmonic_circuit)
-            # print("tmp_rot_harmonic_circuit:")
-            # print(tmp_rot_harmonic_circuit)
-            rot_harmonic_circuit = Program()
-            for instruction in tmp_rot_harmonic_circuit.instructions:
-                if not isinstance(instruction, Pragma):
-                    rot_harmonic_circuit.inst(instruction)
+                # TODO: Remove these lines
+                tmp_rot_harmonic_circuit = compiler.compile(rot_harmonic_circuit)
+                # print("tmp_rot_harmonic_circuit:")
+                # print(tmp_rot_harmonic_circuit)
+                rot_harmonic_circuit = Program()
+                for instruction in tmp_rot_harmonic_circuit.instructions:
+                    if not isinstance(instruction, Pragma):
+                        rot_harmonic_circuit.inst(instruction)
 
-        print("rot_harmonic_circuit:")
-        print(rot_harmonic_circuit)
+            print("rot_harmonic_circuit:")
+            print(rot_harmonic_circuit)
 
-        harmony_notes_factor = 2**(species - 1)  # Number of harmony notes for each melody note
+        harmony_notes_factor = 2**(species - 1) * (1 if harmonyenabled else 0)  # Number of harmony notes for each melody note
         num_composition_bits = TOTAL_MELODY_NOTES * (harmony_notes_factor + 1) * NUM_CIRCUIT_WIRES
 
         composition_bits = [0] * num_composition_bits
@@ -198,68 +205,69 @@ def toy_piano_counterpoint():
                 #print(melody_note_idx)
                 #print(measured_pitch)
 
-            # Now compute a harmony note for the melody note
-            #print("Now compute a harmony note for the melody notev")
-            p = Program()
-
-            for bit_idx in range(0, NUM_CIRCUIT_WIRES):
-                if composition_bits[melody_note_idx * NUM_CIRCUIT_WIRES + bit_idx] == 0:
-                    p.inst(I(NUM_CIRCUIT_WIRES - 1 - bit_idx))
-                else:
-                    p.inst(X(NUM_CIRCUIT_WIRES - 1 - bit_idx))
-
-            p.inst(copy.deepcopy(rot_harmonic_circuit))
-            p.inst().measure(0, 0).measure(1, 1) \
-                .measure(2, 2)
-            # print("rot_harmonic_circuit:")
-            # print(p)
-
-            result = q_con.run(p, [2, 1, 0], num_runs)
-            bits = result[0]
-            for bit_idx in range(0, NUM_CIRCUIT_WIRES):
-                composition_bits[(melody_note_idx * NUM_CIRCUIT_WIRES * harmony_notes_factor) +
-                                 (TOTAL_MELODY_NOTES * NUM_CIRCUIT_WIRES) + bit_idx] = bits[bit_idx]
-
-            #print(composition_bits)
-
-            measured_pitch = bits[0] * 4 + bits[1] * 2 + bits[2]
-            #print("harmony melody_note_idx measured_pitch")
-            #print(melody_note_idx)
-            #print(measured_pitch)
-
-
-            # Now compute melody notes to follow the harmony note
-            #print("Now compute melody notes to follow the harmony note")
-            for harmony_note_idx in range(1, harmony_notes_factor):
+            if harmonyenabled:
+                # Now compute a harmony note for the melody note
+                #print("Now compute a harmony note for the melody notev")
                 p = Program()
 
                 for bit_idx in range(0, NUM_CIRCUIT_WIRES):
-                    if (composition_bits[(melody_note_idx * NUM_CIRCUIT_WIRES * harmony_notes_factor) +
-                                         ((harmony_note_idx - 1) * NUM_CIRCUIT_WIRES) +
-                                         (TOTAL_MELODY_NOTES * NUM_CIRCUIT_WIRES) + bit_idx] == 0):
+                    if composition_bits[melody_note_idx * NUM_CIRCUIT_WIRES + bit_idx] == 0:
                         p.inst(I(NUM_CIRCUIT_WIRES - 1 - bit_idx))
                     else:
                         p.inst(X(NUM_CIRCUIT_WIRES - 1 - bit_idx))
 
-                p.inst(copy.deepcopy(rot_melodic_circuit))
+                p.inst(copy.deepcopy(rot_harmonic_circuit))
                 p.inst().measure(0, 0).measure(1, 1) \
                     .measure(2, 2)
-                #print("rot_melodic_circuit:")
-                #print(p)
+                # print("rot_harmonic_circuit:")
+                # print(p)
 
                 result = q_con.run(p, [2, 1, 0], num_runs)
                 bits = result[0]
                 for bit_idx in range(0, NUM_CIRCUIT_WIRES):
                     composition_bits[(melody_note_idx * NUM_CIRCUIT_WIRES * harmony_notes_factor) +
-                                      ((harmony_note_idx) * NUM_CIRCUIT_WIRES) +
                                      (TOTAL_MELODY_NOTES * NUM_CIRCUIT_WIRES) + bit_idx] = bits[bit_idx]
 
                 #print(composition_bits)
 
                 measured_pitch = bits[0] * 4 + bits[1] * 2 + bits[2]
-                #print("melody after harmony melody_note_idx measured_pitch")
+                #print("harmony melody_note_idx measured_pitch")
                 #print(melody_note_idx)
                 #print(measured_pitch)
+
+
+                # Now compute melody notes to follow the harmony note
+                #print("Now compute melody notes to follow the harmony note")
+                for harmony_note_idx in range(1, harmony_notes_factor):
+                    p = Program()
+
+                    for bit_idx in range(0, NUM_CIRCUIT_WIRES):
+                        if (composition_bits[(melody_note_idx * NUM_CIRCUIT_WIRES * harmony_notes_factor) +
+                                             ((harmony_note_idx - 1) * NUM_CIRCUIT_WIRES) +
+                                             (TOTAL_MELODY_NOTES * NUM_CIRCUIT_WIRES) + bit_idx] == 0):
+                            p.inst(I(NUM_CIRCUIT_WIRES - 1 - bit_idx))
+                        else:
+                            p.inst(X(NUM_CIRCUIT_WIRES - 1 - bit_idx))
+
+                    p.inst(copy.deepcopy(rot_melodic_circuit))
+                    p.inst().measure(0, 0).measure(1, 1) \
+                        .measure(2, 2)
+                    #print("rot_melodic_circuit:")
+                    #print(p)
+
+                    result = q_con.run(p, [2, 1, 0], num_runs)
+                    bits = result[0]
+                    for bit_idx in range(0, NUM_CIRCUIT_WIRES):
+                        composition_bits[(melody_note_idx * NUM_CIRCUIT_WIRES * harmony_notes_factor) +
+                                          ((harmony_note_idx) * NUM_CIRCUIT_WIRES) +
+                                         (TOTAL_MELODY_NOTES * NUM_CIRCUIT_WIRES) + bit_idx] = bits[bit_idx]
+
+                    #print(composition_bits)
+
+                    measured_pitch = bits[0] * 4 + bits[1] * 2 + bits[2]
+                    #print("melody after harmony melody_note_idx measured_pitch")
+                    #print(melody_note_idx)
+                    #print(measured_pitch)
 
         all_note_nums = create_note_nums_array(composition_bits)
         melody_note_nums = all_note_nums[0:TOTAL_MELODY_NOTES]
@@ -319,48 +327,62 @@ def pitch_letter_by_index(pitch_idx):
 # Produce output for Lilypond
 def create_lilypond(melody_note_nums, harmony_note_nums, composer):
     harmony_notes_fact = int(len(harmony_note_nums) / len(melody_note_nums))
-    retval = "\\version \"2.18.2\" \\paper {#(set-paper-size \"a5\")} \\header {title=\"Schrodinger's Cat\" subtitle=\"on a Toy Piano\" composer = \"" + composer + "\"}  melody = \\absolute { \\clef \"bass\" \\numericTimeSignature \\time 4/4 \\tempo 4 = 100"
+    harmonyenabled = harmony_notes_fact > 0
+    retval = "\\version \"2.18.2\" \\paper {#(set-paper-size \"a5\")} " +\
+             " \\header {title=\"Schrodinger's Cat\" subtitle=\"on a Toy Piano\" composer = \"" + composer + "\"} " + \
+             " melody = \\absolute { \\clef " + \
+             (" \"bass\" " if harmonyenabled else " \"treble\" ") + \
+             " \\numericTimeSignature \\time 4/4 \\tempo 4 = 100"
     for pitch in melody_note_nums:
-        retval += " " + pitch_letter_by_index(pitch) + "2"
+        retval += " " + pitch_letter_by_index(pitch) + ("" if harmonyenabled else "'") + ("2" if harmonyenabled else "4")
 
     # Add the same pitch to the end of the melody as in the beginning
-    retval += " " + pitch_letter_by_index(melody_note_nums[0]) + "2"
+    retval += " " + pitch_letter_by_index(melody_note_nums[0]) + ("" if harmonyenabled else "'") + ("2" if harmonyenabled else "4")
 
-    retval += "} harmony = \\absolute { \\clef \"treble\" \\numericTimeSignature \\time 4/4 "
-    for pitch in harmony_note_nums:
-        retval += " " + pitch_letter_by_index(pitch) + "'" + str(int(harmony_notes_fact * 2))
+    if harmonyenabled:
+        retval += "} harmony = \\absolute { \\clef \"treble\" \\numericTimeSignature \\time 4/4 "
+        for pitch in harmony_note_nums:
+            retval += " " + pitch_letter_by_index(pitch) + "'" + str(int(harmony_notes_fact * 2))
 
-    # Add the same pitch to the end of the harmony as in the beginning of the melody,
-    # only an octave higher
-    retval += " " + pitch_letter_by_index(melody_note_nums[0]) + "'2"
+        # Add the same pitch to the end of the harmony as in the beginning of the melody,
+        # only an octave higher
+        retval += " " + pitch_letter_by_index(melody_note_nums[0]) + "'2"
 
-    retval += "} \\score { << \\new Staff \\with {instrumentName = #\"Harmony\"}  { \\harmony } \\new Staff \\with {instrumentName = #\"Melody\"}  { \\melody } >> }"
+    retval += "} \\score { << "
+
+    if harmonyenabled:
+        retval += " \\new Staff \\with {instrumentName = #\"Harmony\"}  { \\harmony } "
+
+    retval += " \\new Staff \\with {instrumentName = #\"Melody\"}  { \\melody } >> }"
+
     return retval
 
 # Produce output for toy piano
 def create_toy_piano(melody_note_nums, harmony_note_nums):
     harmony_notes_fact = int(len(harmony_note_nums) / len(melody_note_nums))
+    harmonyenabled = harmony_notes_fact > 0
     quarter_note_dur = 150
     notes = []
     latest_melody_idx = 0
     latest_harmony_idx = 0
     num_pitches_in_octave = 7
-    toy_piano_pitch_offset = 1
+    toy_piano_pitch_offset = 8
 
     for idx, pitch in enumerate(melody_note_nums):
-        notes.append({"num": pitch + toy_piano_pitch_offset, "time": idx * quarter_note_dur * 2})
+        notes.append({"num": pitch + toy_piano_pitch_offset + (0 if harmonyenabled else num_pitches_in_octave), "time": idx * quarter_note_dur * (2 if harmonyenabled else 1)})
         latest_melody_idx = idx
 
     # Add the same pitch to the end of the melody as in the beginning
-    notes.append({"num": melody_note_nums[0] + toy_piano_pitch_offset, "time": (latest_melody_idx + 1) * quarter_note_dur * 2})
+    notes.append({"num": melody_note_nums[0] + toy_piano_pitch_offset + (0 if harmonyenabled else num_pitches_in_octave), "time": (latest_melody_idx + 1) * quarter_note_dur * (2 if harmonyenabled else 1)})
 
-    for idx, pitch in enumerate(harmony_note_nums):
-        notes.append({"num": pitch + num_pitches_in_octave + toy_piano_pitch_offset, "time": idx * quarter_note_dur * 2 / harmony_notes_fact})
-        latest_harmony_idx = idx
+    if harmonyenabled:
+        for idx, pitch in enumerate(harmony_note_nums):
+            notes.append({"num": pitch + num_pitches_in_octave + toy_piano_pitch_offset, "time": idx * quarter_note_dur * 2 / harmony_notes_fact})
+            latest_harmony_idx = idx
 
-    # Add the same pitch to the end of the harmony as in the beginning of the melody,
-    # only an octave higher
-    notes.append({"num": melody_note_nums[0] + num_pitches_in_octave + toy_piano_pitch_offset, "time": (latest_harmony_idx + 1) * quarter_note_dur * 2 / harmony_notes_fact})
+        # Add the same pitch to the end of the harmony as in the beginning of the melody,
+        # only an octave higher
+        notes.append({"num": melody_note_nums[0] + num_pitches_in_octave + toy_piano_pitch_offset, "time": (latest_harmony_idx + 1) * quarter_note_dur * 2 / harmony_notes_fact})
 
     # Sort the array of dictionaries by time
     sorted_notes = sorted(notes, key=lambda k: k['time'])
