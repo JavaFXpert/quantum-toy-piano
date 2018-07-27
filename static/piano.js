@@ -357,7 +357,7 @@ var vm = Vue.component('piano-component', {
       }
       this.measurementsOriginal = resp.data.full_res_dict;
       this.measurements = $.extend(true, {}, this.measurementsOriginal);
-      if (resp.data.lilypond != undefined) {
+      if (resp.data.lilypond != undefined && resp.data.lilypond.length > 0) {
         alert(resp.data.lilypond);
         this.hasJamNotes = false;
       }
