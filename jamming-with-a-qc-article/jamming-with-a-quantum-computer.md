@@ -1,5 +1,7 @@
 # Jamming with a Quantum Computer
 
+James L. Weaver, *Developer Advocate, Pivotal Software, San Francisco, CA 94103* (08 August 2018)
+
 [Musical improvisation](https://en.wikipedia.org/wiki/Musical_improvisation) is the creative activity of composing music "in the moment" while performing it, often in a [jam session](https://en.wikipedia.org/wiki/Jam_session) with other musicians. Although composing and performing music is a creative process, the underlying musical style informs the probabilities of note and rhythmic choices that the musician makes. For example, when improvising in the style of [twelve-bar blues](https://en.wikipedia.org/wiki/Twelve-bar_blues), the notes played with the highest frequency of occurrence are typically the five that comprise the corresponding [minor pentatonic scale](https://en.wikipedia.org/wiki/Pentatonic_scale#Minor_pentatonic_scale). [Leonard B. Meyer](https://en.wikipedia.org/wiki/Leonard_B._Meyer) expressed this idea in the book entitled "Music, the Arts, and Ideas" [[1]](#references)
 
 > Once a musical style has become part of the habit responses of composers, performers, and practiced listeners it may be regarded as a complex system of probabilities. That musical styles are internalized probability systems is demonstrated by the rules of musical grammar and syntax found in textbooks on harmony, counterpoint, and theory in general. The rules stated in such books are almost invariably stated in terms of probability. 
